@@ -22,3 +22,7 @@ header-y += vc4_drm.h
 header-y += virtgpu_drm.h
 header-y += sde_drm.h
 header-y += msm_drm_pp.h
+no-export-headers += armada_drm.h
+no-export-headers += etnaviv_drm.h
+no-export-headers += omap_drm.h
+no-export-headers += vgem_drm.h
