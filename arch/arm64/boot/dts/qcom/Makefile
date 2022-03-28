@@ -94,8 +94,9 @@ sda845-v2.1-cdp-sdxpoorwills-overlay.dtbo-base := sda845-v2.1.dtb
 sda845-v2.1-mtp-sdxpoorwills-overlay.dtbo-base := sda845-v2.1.dtb
 sda845-v2-mtp-sdxpoorwills-overlay.dtbo-base := sda845-v2.dtb
 else
+
 # Not Meizu 16th family
-ifneq ($(CONFIG_MEIZU_M1882), y)
+ifneq ($(CONFIG_MACH_MEIZU_SDM845), y)
 dtb-$(CONFIG_ARCH_SDM845) += sdm845-sim.dtb \
 	sdm845-rumi.dtb \
 	sdm845-mtp.dtb \
@@ -118,14 +119,14 @@ dtb-$(CONFIG_ARCH_SDM845) += sdm845-sim.dtb \
 endif
 
 # Meizu 16th
-ifeq ($(CONFIG_MEIZU_M1882), y)
+ifeq ($(CONFIG_MACH_MEIZU_M1882), y)
 dtb-$(CONFIG_ARCH_SDM845) += \
 	sdm845-v2.1-meizu-m1882.dtb \
 	rtic-meizu-m1882.dtb
 endif
 
 # Meizu 16th Plus
-ifeq ($(CONFIG_MEIZU_M1892), y)
+ifeq ($(CONFIG_MACH_MEIZU_M1892), y)
 dtb-$(CONFIG_ARCH_SDM845) += \
 	sdm845-v2.1-meizu-m1892.dtb \
 	rtic-meizu-m1892.dtb

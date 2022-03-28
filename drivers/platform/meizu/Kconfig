@@ -1,0 +1,27 @@
+config MACH_MEIZU
+	bool "Meizu smartphone"
+	help
+	  This enables support for Meizu smartphones
+
+if MACH_MEIZU
+
+config MACH_MEIZU_SDM845
+	bool "Meizu SDM845 Family"
+    select ARCH_QCOM
+	select ARCH_SDM845
+	help
+	  This enables support for Meizu SDM845 family
+
+config MACH_MEIZU_M1882
+	bool "Meizu 16th"
+	select MACH_MEIZU_SDM845
+	help
+	  This enables support for Meizu 16th
+
+config MACH_MEIZU_M1892
+	bool "Meizu 16th Plus"
+	select MACH_MEIZU_SDM845
+	help
+	  This enables support for Meizu 16th Plus
+
+endif 
