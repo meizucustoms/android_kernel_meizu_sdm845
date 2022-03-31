@@ -278,8 +278,8 @@ cmd_gzip = (cat $(filter-out FORCE,$^) | gzip -n -f -9 > $@) || \
 # ---------------------------------------------------------------------------
 DTC ?= $(objtree)/scripts/dtc/dtc
 
-# Generate __symbols__ to let dtbo work
-DTC_FLAGS += -@
+# Generate __symbols__ and linux,phandle to let dtbo work
+DTC_FLAGS += -@ -H both
 
 # Disable noisy checks by default
 ifeq ($(KBUILD_ENABLE_EXTRA_GCC_CHECKS),)
