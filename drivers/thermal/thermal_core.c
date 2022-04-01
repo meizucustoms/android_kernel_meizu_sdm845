@@ -627,8 +627,7 @@ void thermal_zone_device_update_temp(struct thermal_zone_device *tz,
 {
 	int count;
 
-	if (atomic_read(&in_suspend) && (!tz->ops->is_wakeable ||
-		!(tz->ops->is_wakeable(tz))))
+	if (atomic_read(&in_suspend))
 		return;
 
 	trace_thermal_device_update(tz, event);
@@ -648,8 +647,7 @@ void thermal_zone_device_update(struct thermal_zone_device *tz,
 {
 	int count;
 
-	if (atomic_read(&in_suspend) && (!tz->ops->is_wakeable ||
-		!(tz->ops->is_wakeable(tz))))
+	if (atomic_read(&in_suspend))
 		return;
 
 	if (!tz->ops->get_temp)
@@ -2621,9 +2619,6 @@ static int thermal_pm_notify(struct notifier_block *nb,
 	case PM_POST_SUSPEND:
 		atomic_set(&in_suspend, 0);
 		list_for_each_entry(tz, &thermal_tz_list, node) {
-			if (tz->ops->is_wakeable &&
-				tz->ops->is_wakeable(tz))
-				continue;
 			thermal_zone_device_init(tz);
 			thermal_zone_device_update(tz,
 						   THERMAL_EVENT_UNSPECIFIED);
