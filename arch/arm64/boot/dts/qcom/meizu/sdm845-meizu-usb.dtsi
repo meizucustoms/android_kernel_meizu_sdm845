@@ -1,0 +1,136 @@
+/* Copyright (c) 2022, MeizuCustoms enthusiasts
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&usb0 {
+    qcom,pm-qos-latency = <52>;
+    qcom,msm-bus,vectors-KBps =
+			<MSM_BUS_MASTER_USB3 MSM_BUS_SLAVE_EBI_CH0 0 0>,
+			<MSM_BUS_MASTER_USB3 MSM_BUS_SLAVE_IPA_CFG 0 0>,
+			<MSM_BUS_MASTER_AMPSS_M0 MSM_BUS_SLAVE_USB3 0 0>,
+			<MSM_BUS_MASTER_USB3
+				MSM_BUS_SLAVE_EBI_CH0 1000000 1400000>,
+			<MSM_BUS_MASTER_USB3
+				MSM_BUS_SLAVE_IPA_CFG 2400 4800>,
+			<MSM_BUS_MASTER_AMPSS_M0 MSM_BUS_SLAVE_USB3 0 40000>;
+    
+    dwc3@a600000 {
+        maximum-speed = "high-speed";
+    };
+};
+
+&usb1 {
+    dwc3@a800000 {
+        /delete-node/ dr_mode;
+    };
+};
+
+&soc {
+    /delete-node/ usb_nop_phy;
+};
+
+&qusb_phy0 {
+    pinctrl-names = "atest_usb13_suspend", "atest_usb13_active";
+    pinctrl-0 = <&atest_usb13_oe_suspend &atest_usb13_suspend>;
+    pinctrl-1 = <&atest_usb13_oe_active &atest_usb13_active>;
+
+    qcom,qusb-phy-reg-offset = 
+            <0x240 
+            0x1a0 
+            0x210 
+            0x230 
+            0xa8 
+            0x254 
+            0x198 
+            0x228 
+            0x22c>;
+    qcom,qusb-phy-init-seq = 
+            <0x23 0x210 
+            0x03 0x04 
+            0x7c 0x18c 
+            0x80 0x2c 
+            0x0a 0x184 
+            0x19 0xb4 
+            0x40 0x194 
+            0x17 0x198 
+            0x21 0x214 
+            0x08 0x220 
+            0x58 0x224 
+            0x45 0x240 
+            0x29 0x244 
+            0xca 0x248 
+            0x04 0x24c 
+            0x03 0x250 
+            0x00 0x23c 
+            0x22 0x210>;
+    qcom,qusb-phy-init-temp-seq = 
+            <0x23 0x210 
+            0x03 0x04 
+            0x7c 0x18c 
+            0x80 0x2c 
+            0x0a 0x184 
+            0x19 0xb4 
+            0x40 0x194 
+            0x20 0x198 
+            0x21 0x214 
+            0x00 0x220 
+            0x58 0x224 
+            0x30 0x240 
+            0x29 0x244 
+            0xca 0x248 
+            0x04 0x24c 
+            0x03 0x250 
+            0x00 0x23c 
+            0x22 0x210>;
+    
+    /delete-node/ qcom,override-bias-ctrl2;
+};
+
+&qusb_phy1 {
+    qcom,qusb-phy-reg-offset = 
+            <0x240 
+             0x1a0 
+             0x210 
+             0x230 
+             0xa8 
+             0x254 
+             0x198 
+             0x228 
+             0x22c 
+             0x27c 
+             0x280 
+             0x2a0>;
+    qcom,qusb-phy-init-seq = 
+            <0x23 0x210 
+             0x03 0x04 
+             0x7c 0x18c 
+             0x80 0x2c 
+             0x0a 0x184 
+             0x19 0xb4 
+             0x40 0x194 
+             0x20 0x198 
+             0x21 0x214 
+             0x00 0x220 
+             0x58 0x224 
+             0x20 0x240 
+             0x29 0x244 
+             0xca 0x248 
+             0x04 0x24c 
+             0x03 0x250 
+             0x00 0x23c 
+             0x22 0x210>;
+
+    /delete-node/ qcom,override-bias-ctrl2;
+};
+
+&usb_qmp_dp_phy {
+    status = "disabled";
+};

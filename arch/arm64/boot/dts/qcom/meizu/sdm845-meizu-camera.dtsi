@@ -1,0 +1,80 @@
+/* Copyright (c) 2022, MeizuCustoms enthusiasts
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+    i2c@a98000 {
+        status = "ok";
+        
+        cam_pmic1: cam_pmic1@50 {
+            compatible = "meizu,ext_twl80125";
+            reg = <0x50>;
+            gpios = <&tlmm 21 0>;
+            cam_pmic_io-supply = <&pm8998_s4>;
+            regulator-names = "cam_pmic_io";
+            rgltr-cntrl-support;
+            rgltr-min-voltage = <0x1b7740>;
+            rgltr-max-voltage = <0x1b7740>;
+            rgltr-load-current = <0x186a0>;
+
+            ldo_regulators {
+                ext_twl_ldo1_ldo_reg: ldo_twl_ldo1 {
+                    regulator-name = "twl_ldo1";
+                    regulator-min-microvolt = <0x124f80>;
+                    regulator-max-microvolt = <0x2dc6c0>;
+                    regulator-enable-ramp-delay = <0x108>;
+                };
+
+                ext_twl_ldo2_ldo_reg: ldo_twl_ldo2 {
+                    regulator-name = "twl_ldo2";
+                    regulator-min-microvolt = <0x124f80>;
+                    regulator-max-microvolt = <0x2dc6c0>;
+                    regulator-enable-ramp-delay = <0x108>;
+                };
+
+                ext_twl_ldo3_ldo_reg: ldo_twl_ldo3 {
+                    regulator-name = "twl_ldo3";
+                    regulator-min-microvolt = <0x124f80>;
+                    regulator-max-microvolt = <0x2dc6c0>;
+                    regulator-enable-ramp-delay = <0x108>;
+                };
+
+                ext_twl_ldo4_ldo_reg: ldo_twl_ldo4 {
+                    regulator-name = "twl_ldo4";
+                    regulator-min-microvolt = <0x124f80>;
+                    regulator-max-microvolt = <0x2dc6c0>;
+                    regulator-enable-ramp-delay = <0x108>;
+                };
+
+                ext_twl_ldo5_ldo_reg: ldo_twl_ldo5 {
+                    regulator-name = "twl_ldo5";
+                    regulator-min-microvolt = <0x124f80>;
+                    regulator-max-microvolt = <0x2dc6c0>;
+                    regulator-enable-ramp-delay = <0x108>;
+                };
+
+                ext_twl_buck1_ldo_reg: ldo_twl_buck1 {
+                    regulator-name = "twl_buck1";
+                    regulator-min-microvolt = <0xf4240>;
+                    regulator-max-microvolt = <0x1b7740>;
+                    regulator-enable-ramp-delay = <0x108>;
+                };
+
+                ext_twl_buck2_ldo_reg: ldo_twl_buck2 {
+                    regulator-name = "twl_buck2";
+                    regulator-min-microvolt = <0xf4240>;
+                    regulator-max-microvolt = <0x1b7740>;
+                    regulator-enable-ramp-delay = <0x108>;
+                };
+			};
+        };
+    };
+};

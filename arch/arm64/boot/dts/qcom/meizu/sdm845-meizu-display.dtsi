@@ -1,0 +1,63 @@
+/* Copyright (c) 2022, MeizuCustoms enthusiasts
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+    lcd_vddio_fixed_regulator {
+        compatible = "regulator-fixed";
+        regulator-name = "lcd_vddio_regulator";
+        regulator-min-microvolt = <1800000>;
+        regulator-max-microvolt = <1800000>;
+        regulator-boot-on;
+        enable-active-high;
+        gpio = <&tlmm 51 0x0>;
+    };
+
+    lcd_vdd_fixed_regulator {
+        compatible = "regulator-fixed";
+        regulator-name = "lcd_vdd_regulator";
+        regulator-min-microvolt = <3000000>;
+        regulator-max-microvolt = <3000000>;
+        regulator-boot-on;
+        enable-active-high;
+        gpio = <&tlmm 26 0x0>;
+    };
+};
+
+&mdss_mdp {
+    qcom,sde-data-bus {
+        qcom,msm-bus,name = "mdss_sde_mnoc";
+        qcom,msm-bus,vectors-KBps = 
+            <22 773 0 0>, <23 773 0 0>,
+            <22 773 0 6400000>, <23 773 0 6400000>,
+            <22 773 0 6400000>, <23 773 0 6400000>;
+    };
+
+    qcom,sde-llcc-bus {
+        qcom,msm-bus,name = "mdss_sde_llcc";
+        qcom,msm-bus,num-cases = <3>;
+        qcom,msm-bus,num-paths = <1>;
+        qcom,msm-bus,vectors-KBps = 
+            <132 770 0 0>,
+            <132 770 0 6400000>,
+            <132 770 0 6400000>;
+    };
+
+    qcom,sde-ebi-bus {
+        qcom,msm-bus,name = "mdss_sde_ebi";
+        qcom,msm-bus,num-cases = <3>;
+        qcom,msm-bus,num-paths = <1>;
+        qcom,msm-bus,vectors-KBps = 
+            <129 512 0 0>,
+            <129 512 0 6400000>,
+            <129 512 0 6400000>;
+    };
+};

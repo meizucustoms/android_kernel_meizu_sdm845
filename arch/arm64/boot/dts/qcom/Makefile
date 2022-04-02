@@ -1,6 +1,8 @@
+ifneq ($(CONFIG_MACH_MEIZU_SDM845), y)
 dtb-$(CONFIG_ARCH_QCOM)	+= apq8016-sbc.dtb msm8916-mtp.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8996-mtp.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= apq8096-db820c.dtb
+endif
 
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
 	dtbo-$(CONFIG_ARCH_SDM845) += \
@@ -116,7 +118,7 @@ dtb-$(CONFIG_ARCH_SDM845) += sdm845-sim.dtb \
 	sdm845-interposer-sdm670-cdp.dtb \
 	sdm845-v2.1-rb3.dtb \
 	sdm845-v2.1-mtp.dtb
-endif
+else
 
 # Meizu 16th
 ifeq ($(CONFIG_MACH_MEIZU_M1882), y)
@@ -130,6 +132,8 @@ ifeq ($(CONFIG_MACH_MEIZU_M1892), y)
 dtb-$(CONFIG_ARCH_SDM845) += \
 	sdm845-v2.1-meizu-m1892.dtb \
 	rtic-meizu-m1892.dtb
+endif 
+
 endif
 
 endif

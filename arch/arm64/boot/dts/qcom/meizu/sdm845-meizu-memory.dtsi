@@ -10,12 +10,18 @@
  * GNU General Public License for more details.
  */
 
-#include "sdm845-meizu-audio.dtsi"
-#include "sdm845-meizu-camera.dtsi"
-#include "sdm845-meizu-display.dtsi"
-#include "sdm845-meizu-dt-fstab.dtsi"
-#include "sdm845-meizu-general.dtsi"
-#include "sdm845-meizu-io.dtsi"
-#include "sdm845-meizu-memory.dtsi"
-#include "sdm845-meizu-pinctrl.dtsi"
-#include "sdm845-meizu-usb.dtsi"
+/ {
+    reserved-memory {
+        ramoops: ramoops@9ff00000 {
+            compatible = "ramoops";
+            reg = <0x00 0x9ff00000 0x00 0x200000>;
+            record-size = <0x4000>;
+            console-size = <0x40000>;
+        };
+        psn_mem_region: psn_mem_region@a0100000 {
+            compatible = "removed-dma-pool";
+            no-map;
+            reg = <0x00 0xa0100000 0x00 0x400>;
+        };
+    };
+};

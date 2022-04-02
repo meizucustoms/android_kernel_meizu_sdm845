@@ -10,12 +10,16 @@
  * GNU General Public License for more details.
  */
 
-#include "sdm845-meizu-audio.dtsi"
-#include "sdm845-meizu-camera.dtsi"
-#include "sdm845-meizu-display.dtsi"
-#include "sdm845-meizu-dt-fstab.dtsi"
-#include "sdm845-meizu-general.dtsi"
-#include "sdm845-meizu-io.dtsi"
-#include "sdm845-meizu-memory.dtsi"
-#include "sdm845-meizu-pinctrl.dtsi"
-#include "sdm845-meizu-usb.dtsi"
+/ {
+    aliases {
+        spi1 = &qupv3_se0_spi;
+        spi2 = &qupv3_se7_spi;
+    };
+};
+
+&soc {
+    qupv3_se0_spi: spi@880000 {
+        pinctrl-0 = <&qupv3_se0_spi_active &qupv3_se0_spi_cs1_active>;
+		pinctrl-1 = <&qupv3_se0_spi_sleep &qupv3_se0_spi_cs1_sleep>;
+    };
+};

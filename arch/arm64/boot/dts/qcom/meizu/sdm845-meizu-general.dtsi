@@ -1,0 +1,101 @@
+/* Copyright (c) 2022, MeizuCustoms enthusiasts
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+    debug_tools {
+        status = "ok";
+        compatible = "qcom,timestamp";
+    };
+
+    qcom,msm-imem@146bf000 {
+        compatible = "qcom,msm-imem-reduced_sdi_mode";
+        reg = <0x6dc 0x04>;
+    };
+
+    qcom,ipc_router_dsps_xprt {
+        /delete-node/ qcom,low-latency-xprt;
+    };
+
+    qcom,icnss@18800000 {
+        qcom,smmu-s1-bypass;
+        /delete-node/ qcom,gpio-early-crash-ind;
+    };
+
+    /delete-node/ csr@6b0e000;
+};
+
+&msm_gpu {
+    /delete-node/ qcom,l3-pwrlevels;
+    /delete-node/ tzone-names;
+};
+
+&ipa_hw {
+    qcom,ipa-hw-mode = <1>;
+    /delete-node/ qcom,smmu-fast-map;
+
+    ipa_smmu_ap: ipa_smmu_ap {
+        qcom,smmu-s1-bypass;
+    };
+
+    ipa_smmu_wlan: ipa_smmu_wlan {
+        qcom,smmu-s1-bypass;
+    };
+
+    ipa_smmu_uc: ipa_smmu_uc {
+        qcom,smmu-s1-bypass;
+    };
+};
+
+&qcom_cedev {
+    /delete-node/ qcom_cedev_ns_cb;
+    /delete-node/ qcom_cedev_s_cb;
+};
+
+&qcom_seecom {
+    /delete-node/ qcom,commonlib64-loaded-by-uefi;
+};
+
+&pcie0 {
+    /delete-node/ qcom,phy-status-offset;
+};
+
+&pcie1 {
+    pinctrl-0 = <&pcie1_clkreq_default>;
+    /delete-node/ perst-gpio;
+    /delete-node/ qcom,phy-status-offset;
+};
+
+&clock_cpucc {
+    l3-devs = <&l3_cpu0 &l3_cpu4 &l3_cdsp>;
+};
+
+&clock_debug {
+    qcom,cc-count = <5>;
+};
+
+&pil_modem {
+    /delete-node/ qcom,sequential-fw-load;
+};
+
+&spmi_bus {
+	qcom,pm8005@4 {
+        qcom,power-on@800 {
+            compatible = "qcom,qpnp-power-on";
+            reg = <0x800 0x100>;
+        };
+    };
+};
+
+&wdog {
+    qcom,bark-time = <20000>;
+    qcom,pet-time = <15000>;
+};
