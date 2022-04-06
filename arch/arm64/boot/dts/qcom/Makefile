@@ -122,6 +122,8 @@ else
 
 # Meizu 16th
 ifeq ($(CONFIG_MACH_MEIZU_M1882), y)
+dtbo-$(CONFIG_ARCH_SDM845) += \
+	sdm845-v2.1-mtp-meizu-m1882-overlay.dtb
 dtb-$(CONFIG_ARCH_SDM845) += \
 	sdm845-v2.1-meizu-m1882.dtb \
 	rtic-meizu-m1882.dtb
@@ -129,6 +131,8 @@ endif
 
 # Meizu 16th Plus
 ifeq ($(CONFIG_MACH_MEIZU_M1892), y)
+dtbo-$(CONFIG_ARCH_SDM845) += \
+	sdm845-v2.1-mtp-meizu-m1892-overlay.dtb
 dtb-$(CONFIG_ARCH_SDM845) += \
 	sdm845-v2.1-meizu-m1892.dtb \
 	rtic-meizu-m1892.dtb
