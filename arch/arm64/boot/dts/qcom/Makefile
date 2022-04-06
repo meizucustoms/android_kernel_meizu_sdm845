@@ -1,6 +1,8 @@
+ifneq ($(CONFIG_MACH_MEIZU_SDM845),y)
 dtb-$(CONFIG_ARCH_QCOM)	+= apq8016-sbc.dtb msm8916-mtp.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8996-mtp.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= apq8096-db820c.dtb
+endif
 
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
 	dtbo-$(CONFIG_ARCH_SDM845) += \
@@ -86,6 +88,7 @@ sda845-v2.1-4k-panel-cdp-overlay.dtbo-base := sda845-v2.1.dtb
 sda845-v2.1-4k-panel-mtp-overlay.dtbo-base := sda845-v2.1.dtb
 sda845-v2.1-4k-panel-qrd-overlay.dtbo-base := sda845-v2.1.dtb
 else
+ifneq ($(CONFIG_MACH_MEIZU_SDM845),y)
 dtb-$(CONFIG_ARCH_SDM845) += sdm845-sim.dtb \
 	sdm845-rumi.dtb \
 	sdm845-mtp.dtb \
@@ -101,6 +104,16 @@ dtb-$(CONFIG_ARCH_SDM845) += sdm845-sim.dtb \
 	sdm845-4k-panel-qrd.dtb \
 	sdm845-interposer-sdm670-mtp.dtb \
 	sdm845-interposer-sdm670-cdp.dtb
+else
+dtb-$(CONFIG_MACH_MEIZU_M1882) += \
+	sdm845-v2.1-m1882.dtb
+dtbo-$(CONFIG_MACH_MEIZU_M1882) += \
+	sdm845-v2.1-mtp-overlay-m1882.dtbo
+dtb-$(CONFIG_MACH_MEIZU_M1892) += \
+	sdm845-v2.1-m1892.dtb
+dtbo-$(CONFIG_MACH_MEIZU_M1892) += \
+	sdm845-v2.1-mtp-overlay-m1892.dtbo
+endif
 endif
 
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
