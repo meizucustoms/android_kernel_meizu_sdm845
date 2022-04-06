@@ -282,4 +282,33 @@ config ARCH_ZYNQMP
 	help
 	  This enables support for Xilinx ZynqMP Family
 
+config MACH_MEIZU
+	bool "Meizu device"
+	help
+	  This enables support for Meizu Smartphones
+
+if MACH_MEIZU
+
+config MACH_MEIZU_SDM845
+	bool "Meizu device with Qualcomm Snapdragon 845 SoC"
+	select ARCH_QCOM
+	select ARCH_SDM845
+	help
+	  This enables support for Meizu devices with
+	  Qualcomm Snapdragon 845 SoC
+
+config MACH_MEIZU_M1882
+	bool "Meizu 16th"
+	select MACH_MEIZU_SDM845
+	help
+	  This enables support for Meizu 16th
+
+config MACH_MEIZU_M1892
+	bool "Meizu 16th Plus"
+	select MACH_MEIZU_SDM845
+	help
+	  This enables support for Meizu 16th Plus
+
+endif
+
 endmenu
