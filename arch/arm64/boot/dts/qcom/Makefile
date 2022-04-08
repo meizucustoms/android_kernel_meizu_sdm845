@@ -2,7 +2,6 @@ ifneq ($(CONFIG_MACH_MEIZU_SDM845), y)
 dtb-$(CONFIG_ARCH_QCOM)	+= apq8016-sbc.dtb msm8916-mtp.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8996-mtp.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= apq8096-db820c.dtb
-endif
 
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
 	dtbo-$(CONFIG_ARCH_SDM845) += \
@@ -96,9 +95,6 @@ sda845-v2.1-cdp-sdxpoorwills-overlay.dtbo-base := sda845-v2.1.dtb
 sda845-v2.1-mtp-sdxpoorwills-overlay.dtbo-base := sda845-v2.1.dtb
 sda845-v2-mtp-sdxpoorwills-overlay.dtbo-base := sda845-v2.dtb
 else
-
-# Not Meizu 16th family
-ifneq ($(CONFIG_MACH_MEIZU_SDM845), y)
 dtb-$(CONFIG_ARCH_SDM845) += sdm845-sim.dtb \
 	sdm845-rumi.dtb \
 	sdm845-mtp.dtb \
@@ -118,28 +114,6 @@ dtb-$(CONFIG_ARCH_SDM845) += sdm845-sim.dtb \
 	sdm845-interposer-sdm670-cdp.dtb \
 	sdm845-v2.1-rb3.dtb \
 	sdm845-v2.1-mtp.dtb
-else
-
-# Meizu 16th
-ifeq ($(CONFIG_MACH_MEIZU_M1882), y)
-dtbo-$(CONFIG_ARCH_SDM845) += \
-	sdm845-v2.1-mtp-meizu-m1882-overlay.dtb
-dtb-$(CONFIG_ARCH_SDM845) += \
-	sdm845-v2.1-meizu-m1882.dtb \
-	rtic-meizu-m1882.dtb
-endif
-
-# Meizu 16th Plus
-ifeq ($(CONFIG_MACH_MEIZU_M1892), y)
-dtbo-$(CONFIG_ARCH_SDM845) += \
-	sdm845-v2.1-mtp-meizu-m1892-overlay.dtb
-dtb-$(CONFIG_ARCH_SDM845) += \
-	sdm845-v2.1-meizu-m1892.dtb \
-	rtic-meizu-m1892.dtb
-endif 
-
-endif
-
 endif
 
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
@@ -700,6 +674,31 @@ dtb-$(CONFIG_ARCH_SDM429) += sdm429-mtp.dtb \
 endif
 
 dtb-$(CONFIG_ARCH_SDM845_VM) += sdm845-vm.dtb
+else
+
+# Meizu 16th
+ifeq ($(CONFIG_MACH_MEIZU_M1882), y)
+# DTBO
+dtbo-$(CONFIG_ARCH_SDM845) := \
+	sdm845-v2.1-mtp-meizu-m1882-overlay.dtbo
+sdm845-v2.1-mtp-meizu-m1882-overlay.dtbo-base := sdm845-v2.1-meizu-m1882.dtb
+# DTB
+dtb-$(CONFIG_ARCH_SDM845) := \
+	sdm845-v2.1-meizu-m1882.dtb
+endif
+
+# Meizu 16th Plus
+ifeq ($(CONFIG_MACH_MEIZU_M1892), y)
+# DTBO
+dtbo-$(CONFIG_ARCH_SDM845) := \
+	sdm845-v2.1-mtp-meizu-m1892-overlay.dtbo
+sdm845-v2.1-mtp-meizu-m1892-overlay.dtbo-base := sdm845-v2.1-meizu-m1892.dtb
+# DTB
+dtb-$(CONFIG_ARCH_SDM845) := \
+	sdm845-v2.1-meizu-m1892.dtb
+endif
+
+endif
 
 always		:= $(dtb-y)
 subdir-y	:= $(dts-dirs)
