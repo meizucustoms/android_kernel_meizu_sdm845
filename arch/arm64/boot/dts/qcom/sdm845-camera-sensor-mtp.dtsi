@@ -289,7 +289,7 @@
 		clock-rates = <24000000>;
 	};
 
-	qcom,cam-sensor@0 {
+	cam_sensor_rear: qcom,cam-sensor@0 {
 		cell-index = <0>;
 		compatible = "qcom,cam-sensor";
 		reg = <0x0>;
@@ -336,7 +336,7 @@
 		clock-rates = <24000000>;
 	};
 
-	qcom,cam-sensor@1 {
+	cam_sensor_rear_aux: qcom,cam-sensor@1 {
 		cell-index = <1>;
 		compatible = "qcom,cam-sensor";
 		reg = <0x1>;
@@ -379,7 +379,7 @@
 		clock-rates = <24000000>;
 	};
 
-	qcom,cam-sensor@2 {
+	cam_sensor_front: qcom,cam-sensor@2 {
 		cell-index = <2>;
 		compatible = "qcom,cam-sensor";
 		reg = <0x02>;
@@ -422,7 +422,7 @@
 		clock-rates = <24000000>;
 	};
 
-	qcom,cam-sensor@3 {
+	cam_sensor_iris: qcom,cam-sensor@3 {
 		cell-index = <3>;
 		compatible = "qcom,cam-sensor";
 		reg = <0x03>;

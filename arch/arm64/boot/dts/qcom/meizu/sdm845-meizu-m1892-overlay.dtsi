@@ -9,3 +9,5 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+
+#include "overlay/sdm845-meizu-common-overlay.dtsi"

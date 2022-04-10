@@ -22,7 +22,7 @@
 #include "sdm845-sde-display.dtsi"
 #include "sdm845-mtp.dtsi"
 #include "sdm845-audio-overlay.dtsi"
-#include "meizu/overlay/sdm845-meizu-m1882-overlay.dtsi"
+#include "meizu/sdm845-meizu-m1882-overlay.dtsi"
 
 / {
 	model = "Qualcomm Technologies, Inc. SDM845 v2.1 MTP";

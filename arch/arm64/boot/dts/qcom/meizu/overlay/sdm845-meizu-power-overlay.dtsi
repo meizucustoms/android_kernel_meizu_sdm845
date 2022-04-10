@@ -1,0 +1,67 @@
+/* Copyright (c) 2022, MeizuCustoms enthusiasts
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&pmi8998_charger {
+	io-channels = <&pmi8998_rradc 8>,
+				<&pmi8998_rradc 10>,
+				<&pmi8998_rradc 3>,
+				<&pmi8998_rradc 4>,
+				<&pmi8998_rradc 2>;
+	io-channel-names = "charger_temp",
+				"charger_temp_max",
+				"usbin_i",
+				"usbin_v",
+				"skin_temp";
+
+	qcom,fcc-max-ua = <2950000>;
+	qcom,fv-max-uv = <4400000>;
+	qcom,dc-icl-ua = <0>;
+	qcom,hvdcp-disable;
+	meizu,used-ui-soc;
+
+	status = "ok";
+};
+
+&pmi8998_fg {
+	qcom,fg-recharge-soc-thr = <99>;
+	qcom,fg-cutoff-voltage = <3300>;
+	qcom,fg-empty-voltage = <3100>;
+	qcom,fg-chg-term-current = <180>;
+	qcom,fg-sys-term-current = <0xfffffed4>; /* -299 */
+	qcom,fg-rsense-sel = <0>;
+	qcom,fg-force-load-profile;
+	qcom,linearize-soc;
+	qcom,fg-delta-soc-thr = <1>;
+};
+
+&red_led {
+	linux,name = "breath";
+	qcom,start-idx = <0>;
+	qcom,ramp-step-ms = <68>;
+	qcom,idx-len = <48>;
+	qcom,duty-pcts = 
+		[00 00 00 00 00 00 00 00 
+		 00 00 00 01 02 03 04 05 
+		 06 07 08 09 0a 0b 0c 0d 
+		 0c 0b 0a 09 08 07 06 05 
+		 04 03 02 01 00 00 00 00 
+		 00 00 00 00 00 00 00 00];
+	qcom,use-blink;
+};
+
+&pmi8998_pdphy {
+	status = "ok";
+};
+
+&pmi8998_qnovo {
+	status = "disabled";
+};

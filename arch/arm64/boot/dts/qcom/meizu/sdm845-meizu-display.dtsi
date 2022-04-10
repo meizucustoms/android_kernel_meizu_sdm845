@@ -10,28 +10,6 @@
  * GNU General Public License for more details.
  */
 
-&soc {
-    lcd_vddio_fixed_regulator {
-        compatible = "regulator-fixed";
-        regulator-name = "lcd_vddio_regulator";
-        regulator-min-microvolt = <1800000>;
-        regulator-max-microvolt = <1800000>;
-        regulator-boot-on;
-        enable-active-high;
-        gpio = <&tlmm 51 0x0>;
-    };
-
-    lcd_vdd_fixed_regulator {
-        compatible = "regulator-fixed";
-        regulator-name = "lcd_vdd_regulator";
-        regulator-min-microvolt = <3000000>;
-        regulator-max-microvolt = <3000000>;
-        regulator-boot-on;
-        enable-active-high;
-        gpio = <&tlmm 26 0x0>;
-    };
-};
-
 &mdss_mdp {
     qcom,sde-data-bus {
         qcom,msm-bus,name = "mdss_sde_mnoc";
@@ -59,5 +37,14 @@
             <129 512 0 0>,
             <129 512 0 6400000>,
             <129 512 0 6400000>;
+    };
+};
+
+&msm_vidc {
+    venus_bus_ddr {
+        qcom,bus-master = <MSM_BUS_MASTER_VIDEO_P0>;
+    };
+    venus_bus_llcc {
+        qcom,bus-range-kbps = <17000 125700>;
     };
 };

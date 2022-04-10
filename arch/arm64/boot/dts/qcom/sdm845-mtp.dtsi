@@ -43,7 +43,7 @@
 };
 
 &soc {
-	gpio_keys {
+	mtp_gpio_keys: gpio_keys {
 		compatible = "gpio-keys";
 		label = "gpio-keys";
 

@@ -39,11 +39,16 @@
             /delete-node/ pcie0_1v5_on;
 
             /* empty nodes (c) meizu inc */
-            pcie0_clkreq_default {
+            pcie0_clkreq_default: pcie0_clkreq_default {
                 mux {
+                    /delete-property/ pins;
+                    /delete-property/ function;
                 };
 
                 config {
+                    /delete-property/ pins;
+                    /delete-property/ drive-strength;
+                    /delete-property/ bias-pull-up;
                 };
             };
         };
@@ -91,6 +96,122 @@
             };
         };
 
+        cam_sensor_rear_active: cam_sensor_rear_active {
+            mux {
+                pins = "gpio80";
+            };
+            config {
+                pins = "gpio80";
+            };
+        };
+
+        cam_sensor_rear_suspend: cam_sensor_rear_suspend {
+            mux {
+                pins = "gpio80";
+            };
+            config {
+                pins = "gpio80";
+            };
+        };
+
+        cam_sensor_front_active: cam_sensor_front_active {
+            mux {
+                pins = "gpio9";
+            };
+            config {
+                pins = "gpio9";
+            };
+        };
+
+        cam_sensor_front_suspend: cam_sensor_front_suspend {
+            mux {
+                pins = "gpio9";
+            };
+            config {
+                pins = "gpio9";
+            };
+        };
+
+        cam_sensor_rear2_active: cam_sensor_rear2_active {
+            mux {
+                pins = "gpio23";
+            };
+            config {
+                pins = "gpio23";
+            };
+        };
+
+        cam_sensor_rear2_suspend: cam_sensor_rear2_suspend {
+            mux {
+                pins = "gpio23";
+            };
+            config {
+                pins = "gpio23";
+            };
+        };
+
+        cam_sensor_rear_vana: cam_sensor_rear_vana {
+            mux {
+                pins = "gpio90";
+            };
+            config {
+                pins = "gpio90";
+            };
+        };
+
+        cam_res_mgr_active: cam_res_mgr_active {
+            mux {
+                pins = "gpio90";
+            };
+            config {
+                pins = "gpio90";
+            };
+        };
+
+        cam_res_mgr_suspend: cam_res_mgr_suspend {
+            mux {
+                pins = "gpio90";
+            };
+            config {
+                pins = "gpio90";
+            };
+        };
+
+        cam_sensor_iris_suspend: cam_sensor_iris_suspend {
+            config {
+                bias-disable;
+                /delete-property/ bias-pull-down;
+            };
+        };
+
+        cci0_active: cci0_active {
+            config {
+                bias-disable;
+                /delete-property/ bias-pull-up;
+            };
+        };
+
+        cci0_suspend: cci0_suspend {
+            config {
+                bias-pull-up;
+                /delete-property/ bias-pull-down;
+            };
+        };
+        
+        cci1_active: cci1_active {
+            config {
+                bias-disable;
+                /delete-property/ bias-pull-up;
+            };
+        };
+
+        cci1_suspend: cci1_suspend {
+            config {
+                bias-pull-up;
+                /delete-property/ bias-pull-down;
+            };
+        };
+
         quat_mi2s_lines {
             quat_mi2s_lines_sleep: quat_mi2s_lines_sleep {
                 mux {
@@ -115,6 +236,55 @@
                     pins = "gpio58", "gpio59", "gpio60", "gpio61";
                     drive-strength = <8>;
                     bias-disable;
+                };
+            };
+        };
+
+        quat_mi2s_sd3 {
+            quat_mi2s_sd3_sleep: quat_mi2s_sd3_sleep {
+                mux {
+                    pins = "gpio127";
+                };
+            };
+
+            quat_mi2s_sd3_active: quat_mi2s_sd3_active {
+                mux {
+                    pins = "gpio127";
+                };
+            };
+        };
+
+        nfc {
+            nfc_int_active: nfc_int_active {
+                mux {
+                    pins = "gpio127";
+                };
+                config {
+                    pins = "gpio127";
+                };
+            };
+
+            nfc_int_sleep: nfc_int_sleep {
+                mux {
+                    pins = "gpio127";
+                };
+                config {
+                    pins = "gpio127";
+                };
+            };
+        };
+
+        qupv3_se9_2uart_pins: qupv3_se9_2uart_pins {
+            qupv3_se9_2uart_active: qupv3_se9_2uart_active {
+                config {
+                    bias-pull-down;
+                    /delete-property/ bias-disable;
+                };
+            };
+            qupv3_se9_2uart_sleep: qupv3_se9_2uart_sleep {
+                config {
+                    bias-pull-down;
+                    /delete-property/ bias-disable;
                 };
             };
         };

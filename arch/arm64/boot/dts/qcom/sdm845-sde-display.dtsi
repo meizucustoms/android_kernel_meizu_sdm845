@@ -577,10 +577,6 @@
 	qcom,usbplug-cc-gpio = <&tlmm 38 0>;
 };
 
-&mdss_mdp {
-	connectors = <&sde_rscc &sde_wb &sde_dp>;
-};
-
 &dsi_dual_nt35597_truly_video {
 	qcom,mdss-dsi-t-clk-post = <0x0D>;
 	qcom,mdss-dsi-t-clk-pre = <0x2D>;

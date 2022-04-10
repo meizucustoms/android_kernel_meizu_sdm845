@@ -10,92 +10,80 @@
  * GNU General Public License for more details.
  */
 
-&soc {
-    debug_tools {
-        status = "ok";
-        compatible = "qcom,timestamp";
+&usb0 {
+    vbus_dwc3-supply = <&smb2_vbus>;
+};
+
+&mtp_gpio_keys {
+    pinctrl-0 = <&key_vol_up_default>;
+
+    hall_sensor {
+        label = "hall_sensor";
+        gpios = <&tlmm 124 0x1>;
+        linux,input-type = <1>;
+        linux,code = <25>;
+        gpio-key,wakeup;
+        debounce-interval = <15>;
+        linux,can-disable;
     };
 
-    qcom,msm-imem@146bf000 {
-        compatible = "qcom,msm-imem-reduced_sdi_mode";
-        reg = <0x6dc 0x04>;
-    };
-
-    qcom,ipc_router_dsps_xprt {
-        /delete-node/ qcom,low-latency-xprt;
-    };
-
-    qcom,icnss@18800000 {
-        qcom,smmu-s1-bypass;
-        /delete-node/ qcom,gpio-early-crash-ind;
-    };
-
-    /delete-node/ csr@6b0e000;
+    /delete-node/ cam_snapshot;
+    /delete-node/ cam_focus;
 };
 
-&msm_gpu {
-    /delete-node/ qcom,l3-pwrlevels;
-    /delete-node/ tzone-names;
+&mtp_batterydata {
+    #include "battery-3511331-meizu-m1882gy-3010mah-averaged-masterslave-jun4th2018.dtsi"
+    #include "battery-3511331-meizu-m1882atl-3010mah-averaged-masterslave-jun4th2018.dtsi"
 };
 
-&ipa_hw {
-    qcom,ipa-hw-mode = <1>;
-    /delete-node/ qcom,smmu-fast-map;
+&qupv3_se9_2uart {
+    status = "ok";
+};
 
-    ipa_smmu_ap: ipa_smmu_ap {
-        qcom,smmu-s1-bypass;
-    };
+&qupv3_se0_spi {
+    status = "ok";
+};
 
-    ipa_smmu_wlan: ipa_smmu_wlan {
-        qcom,smmu-s1-bypass;
-    };
+&qupv3_se7_i2c {
+    status = "ok";
+    qcom,clk-freq-out = <1000000>;
 
-    ipa_smmu_uc: ipa_smmu_uc {
-        qcom,smmu-s1-bypass;
+    aw8691@5a {
+        compatible = "meizu,aw8691_haptic";
+        reg = <0x5a>;
+
+        reset-gpio = <&tlmm 44 0x0>;
+        irq-gpio = <&tlmm 69 0x0>;
+
+        pinctrl-names = "default";
+        pinctrl-0 = <&haptic_default>;
     };
 };
 
-&qcom_cedev {
-    /delete-node/ qcom_cedev_ns_cb;
-    /delete-node/ qcom_cedev_s_cb;
+&qupv3_se3_i2c {
+    status = "ok";
+    qcom,clk-freq-out = <100000>;
+
+    cs_press@26 {
+        compatible = "nif,ni_samd10";
+        reg = <0x26>;
+        vdd-supply = <&pm8998_l22>;
+        regulator_vdd = "vdd";
+        irq-gpio = <&tlmm 36 0x0>;
+        status = "okay";
+    };
 };
 
-&qcom_seecom {
-    /delete-node/ qcom,commonlib64-loaded-by-uefi;
-};
+/ {
+    /* &sdhc_2 */
+    fragment@35 {
+        __overlay__ {
+            pinctrl-0 = <&sdc2_clk_on  &sdc2_cmd_on &sdc2_data_on>;
+            pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off>;
 
-&pcie0 {
-    /delete-node/ qcom,phy-status-offset;
-};
-
-&pcie1 {
-    pinctrl-0 = <&pcie1_clkreq_default>;
-    /delete-node/ perst-gpio;
-    /delete-node/ qcom,phy-status-offset;
-};
-
-&clock_cpucc {
-    l3-devs = <&l3_cpu0 &l3_cpu4 &l3_cdsp>;
-};
-
-&clock_debug {
-    qcom,cc-count = <5>;
-};
-
-&pil_modem {
-    /delete-node/ qcom,sequential-fw-load;
-};
-
-&spmi_bus {
-	qcom,pm8005@4 {
-        qcom,power-on@800 {
-            compatible = "qcom,qpnp-power-on";
-            reg = <0x800 0x100>;
+            /delete-property/ cd-gpios;
+            /delete-property/ qcom,vdd-voltage-level;
+            status = "disabled";
         };
     };
-};
-
-&wdog {
-    qcom,bark-time = <20000>;
-    qcom,pet-time = <15000>;
 };

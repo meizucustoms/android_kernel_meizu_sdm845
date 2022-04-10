@@ -17,30 +17,22 @@
     };
 
     qcom,msm-imem@146bf000 {
-        compatible = "qcom,msm-imem-reduced_sdi_mode";
-        reg = <0x6dc 0x04>;
-    };
-
-    qcom,ipc_router_dsps_xprt {
-        /delete-node/ qcom,low-latency-xprt;
+        reduced_sdi_mode@6dc {
+            compatible = "qcom,msm-imem-reduced_sdi_mode";
+            reg = <0x6dc 0x04>;
+        };
     };
 
     qcom,icnss@18800000 {
         qcom,smmu-s1-bypass;
-        /delete-node/ qcom,gpio-early-crash-ind;
     };
 
     /delete-node/ csr@6b0e000;
 };
 
-&msm_gpu {
-    /delete-node/ qcom,l3-pwrlevels;
-    /delete-node/ tzone-names;
-};
-
 &ipa_hw {
     qcom,ipa-hw-mode = <1>;
-    /delete-node/ qcom,smmu-fast-map;
+    /delete-property/ qcom,smmu-fast-map;
 
     ipa_smmu_ap: ipa_smmu_ap {
         qcom,smmu-s1-bypass;
@@ -60,30 +52,14 @@
     /delete-node/ qcom_cedev_s_cb;
 };
 
-&qcom_seecom {
-    /delete-node/ qcom,commonlib64-loaded-by-uefi;
-};
-
 &pcie0 {
-    /delete-node/ qcom,phy-status-offset;
+    /delete-property/ qcom,phy-status-offset;
 };
 
 &pcie1 {
     pinctrl-0 = <&pcie1_clkreq_default>;
-    /delete-node/ perst-gpio;
-    /delete-node/ qcom,phy-status-offset;
-};
-
-&clock_cpucc {
-    l3-devs = <&l3_cpu0 &l3_cpu4 &l3_cdsp>;
-};
-
-&clock_debug {
-    qcom,cc-count = <5>;
-};
-
-&pil_modem {
-    /delete-node/ qcom,sequential-fw-load;
+    /delete-property/ perst-gpio;
+    /delete-property/ qcom,phy-status-offset;
 };
 
 &spmi_bus {
@@ -98,4 +74,9 @@
 &wdog {
     qcom,bark-time = <20000>;
     qcom,pet-time = <15000>;
+};
+
+&mdss_core_gdsc {
+    /delete-property/ qcom,en-few-wait-val;
+    /delete-property/ qcom,en-rest-wait-val;
 };
