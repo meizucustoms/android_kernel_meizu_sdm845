@@ -36,14 +36,6 @@
     #include "battery-3511331-meizu-m1882atl-3010mah-averaged-masterslave-jun4th2018.dtsi"
 };
 
-&qupv3_se9_2uart {
-    status = "ok";
-};
-
-&qupv3_se0_spi {
-    status = "ok";
-};
-
 &qupv3_se7_i2c {
     status = "ok";
     qcom,clk-freq-out = <1000000>;
@@ -74,9 +66,56 @@
     };
 };
 
+&qupv3_se5_i2c {
+    status = "ok";
+
+    nq@49 {
+        compatible = "st,fts";
+        reg = <0x49>;
+        interrupt-parent = <&tlmm>;
+        interrupts = <125 0x0>;
+        avdd-supply = <&pm8998_l28>;
+        vdd-supply = <&pm8998_l14>;
+        st,regulator_avdd = "avdd";
+        st,regulator_dvdd = "vdd";
+        st,irq-gpio = <&tlmm 125 0x0>;
+        st,reset-gpio = <&tlmm 126 0x0>;
+        pinctrl-names = "tp_int";
+        pinctrl-0 = <&tp_pins_tp_eint_as_int>;
+    };
+};
+
+&qupv3_se7_i2c {
+    aw8691@5a {
+        compatible = "meizu,aw8691_haptic";
+        reg = <0x5a>;
+        reset-gpio = <&tlmm 44 0x0>;
+        pinctrl-names = "default";
+        pinctrl-0 = <&haptic_default>;
+        irq-gpio = <&tlmm 69 0x0>;
+    };
+};
+
+&soc {
+    steller: steller {
+        status = "okay";
+        compatible = "synaptics,fingerprint";
+        vdd_3p4-supply = <&fp_vdd_regulator>;
+        vdd_1p8-supply = <&fp_vio_regulator>;
+        synaptics,gpio-rest = <&tlmm 102 0x0>;
+        synaptics,gpio-ready = <&tlmm 121 0x0>;
+        synaptics,gp0-ctrl = <&tlmm 75 0x0>;
+        synaptics,gp1-ctrl = <&tlmm 76 0x0>;
+        synaptics,ts-in = <&tlmm 103 0x0>;
+        pinctrl-names = "fp_reset_init", "fp_hbm_init";
+        pinctrl-0 = <&fp_reset_init>;
+        pinctrl-1 = <&fp_hbm_init>;
+    };
+};
+
 / {
     /* &sdhc_2 */
-    fragment@35 {
+    fragment@33 {
         __overlay__ {
             pinctrl-0 = <&sdc2_clk_on  &sdc2_cmd_on &sdc2_data_on>;
             pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off>;
@@ -86,4 +125,32 @@
             status = "disabled";
         };
     };
+};
+
+&qupv3_se9_2uart {
+    status = "ok";
+};
+
+&qupv3_se0_spi {
+    status = "ok";
+};
+
+&qupv3_se8_spi {
+    status = "ok";
+};
+
+&usb1 {
+    status = "okay";
+};
+
+&qusb_phy1 {
+    status = "okay";
+};
+
+&usb_qmp_phy {
+    status = "okay";
+};
+
+&wil6210 {
+    status = "ok";
 };

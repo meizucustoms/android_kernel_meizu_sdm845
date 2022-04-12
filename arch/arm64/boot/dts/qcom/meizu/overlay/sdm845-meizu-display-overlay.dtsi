@@ -13,7 +13,7 @@
 #include "dsi-panel-sofef00m-amoled-fhd-cmd.dtsi"
 
 &soc {
-	dsi_sofef00m_amoled_fhd_cmd_display: qcom,dsi-display@20 {
+	dsi_sofef00m_amoled_fhd_cmd_display: qcom,dsi-display@17 {
 		compatible = "qcom,dsi-display";
 		label = "dsi_sofef00m_amoled_cmd_display";
 		qcom,display-type = "primary";

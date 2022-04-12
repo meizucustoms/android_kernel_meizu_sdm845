@@ -10,7 +10,10 @@
  * GNU General Public License for more details.
  */
 
+#include "sdm845-meizu-audio-overlay.dtsi"
 #include "sdm845-meizu-camera-overlay.dtsi"
 #include "sdm845-meizu-display-overlay.dtsi"
 #include "sdm845-meizu-general-overlay.dtsi"
 #include "sdm845-meizu-power-overlay.dtsi"
+#include "sdm845-meizu-thermal-overlay.dtsi"
+#include "sdm845-meizu-vendor-overlay.dtsi" /* Meizu specific things */

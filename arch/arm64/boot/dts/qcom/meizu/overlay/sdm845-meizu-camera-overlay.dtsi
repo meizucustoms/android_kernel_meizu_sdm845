@@ -308,7 +308,7 @@
     gpio-req-tbl-flags = <1>, <0>;
     gpio-req-tbl-label = "CAMIF_MCLK1", "CAM_RESET1";
 
-    led-flash-src = <>;
+    led-flash-src = <&led_flash_rear_aux>;
 
     /delete-property/ gpio-vana;
 };

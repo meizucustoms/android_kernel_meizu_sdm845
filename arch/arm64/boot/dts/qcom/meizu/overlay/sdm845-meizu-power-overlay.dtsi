@@ -31,6 +31,34 @@
 	status = "ok";
 };
 
+&soc {
+	fp_vio_regulator: fp-vio-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "fp_vio_ldo";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		enable-active-high;
+		vin-supply = <&pm8998_s4>;
+	};
+
+	fp_vdd_regulator: fp-vdd-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "fp_vdd_ldo";
+		regulator-min-microvolt = <3450000>;
+		regulator-max-microvolt = <3450000>;
+		enable-active-high;
+		gpio = <&tlmm 52 0x0>;
+		vin-supply = <&pmi8998_bob>;
+	};
+
+	audio_vsys_regulator: vsys-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "audio_vsys";
+		regulator-boot-on;
+		regulator-always-on;
+	};
+};
+
 &pmi8998_fg {
 	qcom,fg-recharge-soc-thr = <99>;
 	qcom,fg-cutoff-voltage = <3300>;
