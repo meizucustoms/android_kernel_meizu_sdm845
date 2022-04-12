@@ -615,6 +615,40 @@ static int dsi_display_read_status(struct dsi_display_ctrl *ctrl,
 	return rc;
 }
 
+#ifdef CONFIG_MACH_MEIZU_SDM845
+static int dsi_display_validate_err_fg(struct dsi_panel *panel) {
+	int rc = 0;
+
+	rc = gpio_request(panel->reset_config.err_fg_gpio, "err_fg_gpio");
+	if (rc < 0)
+		return 1;
+
+	rc = gpio_direction_input(panel->reset_config.err_fg_gpio);
+	if (rc != 0)
+		goto exit;
+
+	rc = gpio_get_value(panel->reset_config.err_fg_gpio);
+	if (rc != 0) {
+		pr_err("%s: invalid err_fg value, att 1\n", __func__);
+		goto exit;
+	}
+
+	usleep_range(20000, 21000);
+
+	rc = gpio_get_value(panel->reset_config.err_fg_gpio);
+	if (rc != 0) {
+		pr_err("%s: invalid err_fg value, att 2, aborting\n", __func__);
+		goto exit;
+	}
+
+	return 1;
+
+exit:
+	gpio_free(panel->reset_config.err_fg_gpio);
+	return rc;
+}
+#endif
+
 static int dsi_display_validate_status(struct dsi_display_ctrl *ctrl,
 		struct dsi_panel *panel)
 {
@@ -623,17 +657,23 @@ static int dsi_display_validate_status(struct dsi_display_ctrl *ctrl,
 	rc = dsi_display_read_status(ctrl, panel);
 	if (rc <= 0) {
 		goto exit;
-	} else {
-		/*
-		 * panel status read successfully.
-		 * check for validity of the data read back.
-		 */
-		rc = dsi_display_validate_reg_read(panel);
-		if (!rc) {
-			rc = -EINVAL;
-			goto exit;
-		}
 	}
+	
+	/*
+	 * panel status read successfully.
+	 * check for validity of the data read back.
+	 */
+	rc = dsi_display_validate_reg_read(panel);
+	if (!rc) {
+		rc = -EINVAL;
+		goto exit;
+	}
+
+#ifdef CONFIG_MACH_MEIZU_SDM845
+	rc = dsi_display_validate_err_fg(panel);
+	if (rc < 0)
+		goto exit;
+#endif
 
 exit:
 	return rc;

@@ -129,6 +129,9 @@ struct dsi_panel_reset_config {
 	u32 count;
 
 	int reset_gpio;
+#ifdef CONFIG_MACH_MEIZU_SDM845
+	int err_fg_gpio;
+#endif
 	int disp_en_gpio;
 	int lcd_mode_sel_gpio;
 	u32 mode_sel_state;
@@ -202,6 +205,10 @@ struct dsi_panel {
 	struct drm_panel_hdr_properties hdr_props;
 	struct drm_panel_esd_config esd_config;
 
+#ifdef CONFIG_MACH_MEIZU_SDM845
+	int mode_state;
+#endif
+
 	bool lp11_init;
 	bool ulps_enabled;
 	bool ulps_suspend_enabled;
@@ -215,6 +222,15 @@ struct dsi_panel {
 	enum dsi_dms_mode dms_mode;
 
 	bool sync_broadcast_en;
+
+#ifdef CONFIG_MACH_MEIZU_SDM845
+	int hbm_mode;
+	int hbm_state;
+	int s2_hbm_state;
+	int lut;
+	int aod;
+	int doze_mode;
+#endif
 
 	struct dsi_panel_exd_config exd_config;
 };

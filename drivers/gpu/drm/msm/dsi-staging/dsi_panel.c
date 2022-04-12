@@ -2197,6 +2197,17 @@ static int dsi_panel_parse_gpios(struct dsi_panel *panel,
 		goto error;
 	}
 
+#ifdef CONFIG_MACH_MEIZU_SDM845
+	panel->reset_config.err_fg_gpio = of_get_named_gpio(of_node,
+					      "qcom,platform-err-fg-gpio",
+					      0);
+	if (!gpio_is_valid(panel->reset_config.err_fg_gpio)) {
+		pr_err("[%s] failed get err-fg gpio, rc=%d\n", panel->name, rc);
+		rc = -EINVAL;
+		goto error;
+	}
+#endif
+
 	panel->reset_config.disp_en_gpio = of_get_named_gpio(of_node,
 						"qcom,5v-boost-gpio",
 						0);
