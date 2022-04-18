@@ -48,8 +48,6 @@
 			regulator-min-microvolt = <2864000>;
 			regulator-max-microvolt = <3312000>;
             #qcom,init-enable = <0>;
-            regulator-always-on;
-            regulator-boot-on;
 			qcom,init-voltage = <3312000>;
 			qcom,init-mode = <RPMH_REGULATOR_MODE_LDO_HPM>;
 		};

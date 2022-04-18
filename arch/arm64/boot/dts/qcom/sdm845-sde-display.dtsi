@@ -124,7 +124,6 @@
 		qcom,panel-mode-gpio = <&tlmm 52 0>;
 
 		qcom,dsi-panel = <&dsi_sharp_4k_dsc_video>;
-		vddio-supply = <&pm8998_l14>;
 		lab-supply = <&lab_regulator>;
 		ibb-supply = <&ibb_regulator>;
 	};
@@ -148,7 +147,6 @@
 		qcom,panel-mode-gpio = <&tlmm 52 0>;
 
 		qcom,dsi-panel = <&dsi_sharp_4k_dsc_cmd>;
-		vddio-supply = <&pm8998_l14>;
 		lab-supply = <&lab_regulator>;
 		ibb-supply = <&ibb_regulator>;
 	};
@@ -172,7 +170,6 @@
 		qcom,panel-mode-gpio = <&tlmm 52 0>;
 
 		qcom,dsi-panel = <&dsi_sharp_1080_cmd>;
-		vddio-supply = <&pm8998_l14>;
 		lab-supply = <&lab_regulator>;
 		ibb-supply = <&ibb_regulator>;
 	};
@@ -196,7 +193,6 @@
 		qcom,panel-mode-gpio = <&tlmm 52 0>;
 
 		qcom,dsi-panel = <&dsi_dual_sharp_1080_120hz_cmd>;
-		vddio-supply = <&pm8998_l14>;
 		lab-supply = <&lab_regulator>;
 		ibb-supply = <&ibb_regulator>;
 	};
@@ -219,7 +215,6 @@
 		qcom,panel-mode-gpio = <&tlmm 52 0>;
 
 		qcom,dsi-panel = <&dsi_dual_nt35597_truly_video>;
-		vddio-supply = <&pm8998_l14>;
 		lab-supply = <&lab_regulator>;
 		ibb-supply = <&ibb_regulator>;
 	};
@@ -243,7 +238,6 @@
 		qcom,panel-mode-gpio = <&tlmm 52 0>;
 
 		qcom,dsi-panel = <&dsi_dual_nt35597_truly_cmd>;
-		vddio-supply = <&pm8998_l14>;
 		lab-supply = <&lab_regulator>;
 		ibb-supply = <&ibb_regulator>;
 	};
@@ -267,7 +261,6 @@
 		qcom,panel-mode-gpio = <&tlmm 52 0>;
 
 		qcom,dsi-panel = <&dsi_nt35597_truly_dsc_cmd>;
-		vddio-supply = <&pm8998_l14>;
 		lab-supply = <&lab_regulator>;
 		ibb-supply = <&ibb_regulator>;
 	};
@@ -291,7 +284,6 @@
 		qcom,panel-mode-gpio = <&tlmm 52 0>;
 
 		qcom,dsi-panel = <&dsi_nt35597_truly_dsc_video>;
-		vddio-supply = <&pm8998_l14>;
 		lab-supply = <&lab_regulator>;
 		ibb-supply = <&ibb_regulator>;
 	};
@@ -422,7 +414,6 @@
 		qcom,panel-mode-gpio = <&tlmm 52 0>;
 
 		qcom,dsi-panel = <&dsi_dual_nt35597_video>;
-		vddio-supply = <&pm8998_l14>;
 		lab-supply = <&lab_regulator>;
 		ibb-supply = <&ibb_regulator>;
 	};
@@ -447,7 +438,6 @@
 		qcom,panel-mode-gpio = <&tlmm 52 0>;
 
 		qcom,dsi-panel = <&dsi_dual_nt35597_cmd>;
-		vddio-supply = <&pm8998_l14>;
 		lab-supply = <&lab_regulator>;
 		ibb-supply = <&ibb_regulator>;
 	};
@@ -471,7 +461,6 @@
 		qcom,panel-mode-gpio = <&tlmm 52 0>;
 
 		qcom,dsi-panel = <&dsi_dual_nt36850_truly_cmd>;
-		vddio-supply = <&pm8998_l14>;
 		lab-supply = <&lab_regulator>;
 		ibb-supply = <&ibb_regulator>;
 	};
@@ -499,7 +488,6 @@
 	pinctrl-0 = <&sde_dp_aux_active &sde_dp_usbplug_cc_active>;
 	pinctrl-1 = <&sde_dp_aux_suspend &sde_dp_usbplug_cc_suspend>;
 	qcom,aux-en-gpio = <&tlmm 43 0>;
-	qcom,aux-sel-gpio = <&tlmm 51 0>;
 	qcom,usbplug-cc-gpio = <&tlmm 38 0>;
 };
 

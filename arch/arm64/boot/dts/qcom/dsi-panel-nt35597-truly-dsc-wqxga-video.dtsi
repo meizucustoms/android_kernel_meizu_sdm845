@@ -37,7 +37,6 @@
 		qcom,mdss-dsi-reset-sequence = <1 10>, <0 10>, <1 10>;
 		qcom,mdss-pan-physical-width-dimension = <74>;
 		qcom,mdss-pan-physical-height-dimension = <131>;
-		qcom,mdss-dsi-dma-schedule-line = <5>;
 
 		qcom,mdss-dsi-display-timings {
 			timing@0{

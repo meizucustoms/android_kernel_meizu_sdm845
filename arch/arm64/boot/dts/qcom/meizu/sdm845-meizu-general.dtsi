@@ -47,6 +47,10 @@
     };
 };
 
+&qcom_seecom {
+    reg = <0x86d00000 0x3e00000>;
+};
+
 &qcom_cedev {
     /delete-node/ qcom_cedev_ns_cb;
     /delete-node/ qcom_cedev_s_cb;

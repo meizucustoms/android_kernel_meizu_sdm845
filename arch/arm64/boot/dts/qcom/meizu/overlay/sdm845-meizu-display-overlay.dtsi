@@ -28,7 +28,7 @@
 		pinctrl-0 = <&sde_dsi_active &sde_te_active>;
 		pinctrl-1 = <&sde_dsi_suspend &sde_te_suspend>;
 		qcom,platform-te-gpio = <&tlmm 10 0>;
-		qcom,platform-reset-gpio = <&pm8998_gpios 8 0>;
+		qcom,platform-reset-gpio = <&tlmm 8 0>;
 		qcom,platform-err-fg-gpio = <&tlmm 12 0>;
 
 		qcom,dsi-display-active;
@@ -40,7 +40,7 @@
 };
 
 &dsi_sofef00m_amoled_fhd_cmd {
-    qcom,platform-reset-gpio = <&pm8998_gpios 8 0>;
+    qcom,platform-reset-gpio = <&tlmm 8 0>;
     qcom,platform-te-gpio = <&tlmm 10 0>;
     qcom,platform-err-fg-gpio = <&tlmm 12 0>;
 
