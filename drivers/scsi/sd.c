@@ -66,6 +66,10 @@
 #include <scsi/scsi_ioctl.h>
 #include <scsi/scsicam.h>
 
+#ifdef CONFIG_MACH_MEIZU_SDM845
+#include <linux/buffer_head.h>
+#endif
+
 #include "sd.h"
 #include "scsi_priv.h"
 #include "scsi_logging.h"
@@ -98,6 +102,11 @@ MODULE_ALIAS_SCSI_DEVICE(TYPE_RBC);
 #define SD_MINORS	16
 #else
 #define SD_MINORS	0
+#endif
+
+#ifdef CONFIG_MACH_MEIZU_SDM845
+static struct gendisk *ufs_disk = NULL;
+static int partition_major = 0;
 #endif
 
 static void sd_config_discard(struct scsi_disk *, unsigned int);
@@ -135,6 +144,163 @@ static const char *sd_cache_types[] = {
 	"write through", "none", "write back",
 	"write back, no read (daft)"
 };
+
+#ifdef CONFIG_MACH_MEIZU_SDM845
+#define UFS_BLOCK_SIZE (4096)
+
+dev_t sd_lookup_partition(const char *part_name, sector_t *start, sector_t *nr_sect)
+{
+	struct disk_part_iter piter;
+	struct hd_struct *part;
+
+	dev_t devt = MKDEV(0, 0);
+
+	if (!ufs_disk) {
+		return devt;
+	}
+
+	disk_part_iter_init(&piter, ufs_disk, DISK_PITER_INCL_EMPTY);
+	while ((part = disk_part_iter_next(&piter))) {
+		if (strcmp(part->info->volname, part_name) == 0) {
+			devt = part->__dev.devt;
+			*start = part->start_sect;
+			*nr_sect = part->nr_sects;
+			partition_major = ufs_disk->major;
+			break;
+		}
+	}
+	disk_part_iter_exit(&piter);
+
+	return devt;
+}
+
+static int sd_block_rw(int write, sector_t index,sector_t index_offset, void *buffer, size_t len)
+{
+	struct block_device *bdev;
+	struct buffer_head *bh = NULL;
+	fmode_t mode = FMODE_READ;
+	int err = -EIO;
+
+	if (len > UFS_BLOCK_SIZE)
+		return -EINVAL;
+	bdev = bdget(MKDEV(partition_major, 0));
+
+	if (!bdev)
+		return -EIO;
+
+	mode = write ? FMODE_WRITE : FMODE_READ;
+	if (blkdev_get(bdev, mode, NULL)) {
+		bdput(bdev);
+		goto out;
+	}
+	set_blocksize(bdev, UFS_BLOCK_SIZE);
+	bh = __getblk(bdev, index, UFS_BLOCK_SIZE);
+
+	if (bh) {
+		clear_buffer_uptodate(bh);
+		get_bh(bh);
+		lock_buffer(bh);
+		bh->b_end_io = end_buffer_read_sync;
+		submit_bh(REQ_OP_READ, READ_SYNC, bh);
+		wait_on_buffer(bh);
+		if (unlikely(!buffer_uptodate(bh))) {
+			pr_err("%s: read error!!\n", __func__);
+			goto out;
+		}
+		if (write) {
+			lock_buffer(bh);
+			memcpy(bh->b_data+index_offset, buffer, len);
+			bh->b_end_io = end_buffer_write_sync;
+			get_bh(bh);
+			submit_bh(REQ_OP_WRITE, WRITE_SYNC, bh);
+			wait_on_buffer(bh);
+			if (unlikely(!buffer_uptodate(bh))) {
+				pr_err("%s: write error!!\n", __func__);
+				goto out;
+			}
+		} else {
+			memcpy(buffer, bh->b_data+index_offset, len);
+		}
+		err = 0;
+	} else {
+		pr_info("%s error\n", __func__);
+	}
+
+out:
+	brelse(bh);
+	blkdev_put(bdev, mode);
+
+	return err;
+}
+
+int sd_partition_rw(const char *part_name, int write, loff_t offset,
+						void *buffer, size_t len)
+{
+	int ret = 0;
+	sector_t first_sect;
+	sector_t index;
+	sector_t index_offset;
+	void *p = buffer;
+
+	dev_t devt;
+	sector_t start, nr_sect;
+
+	if (buffer == NULL)
+		return -EINVAL;
+
+	if (offset % 512) {
+		pr_err("%s: offset(%lld) unalign to 512Byte!\n", __func__, offset);
+		return -EINVAL;
+	}
+
+	devt = sd_lookup_partition(part_name, &start, &nr_sect);
+	start = start/(UFS_BLOCK_SIZE/512);
+	nr_sect = nr_sect/(UFS_BLOCK_SIZE/512);
+
+	if (!devt) {
+		pr_err("%s: can't find partition(%s)\n", __func__, part_name);
+		return -ENODEV;
+	}
+
+	if (offset < 0 || (offset + len) > nr_sect * UFS_BLOCK_SIZE) {
+		pr_err("%s: access area exceed parition(%s) range.\n", __func__, part_name);
+		return -EINVAL;
+	}
+
+	index = start + offset / UFS_BLOCK_SIZE;
+	index_offset = offset % UFS_BLOCK_SIZE;
+	first_sect = index;
+
+	while (len > 0) {
+		size_t size = len;
+
+		if (size > UFS_BLOCK_SIZE)
+			size = UFS_BLOCK_SIZE;
+		
+		if (index_offset>0 && index==first_sect){
+			if (size > UFS_BLOCK_SIZE - index_offset)
+				size = UFS_BLOCK_SIZE - index_offset;
+		}
+
+		if (index == first_sect){
+			ret = sd_block_rw(write, index, index_offset, p, size);
+		}else{
+			ret = sd_block_rw(write, index, 0, p, size);
+		}
+			
+		if (ret) {
+			pr_err("%s (%lu) error %d\n", __func__, (unsigned long)len, ret);
+			break;
+		}
+
+		len -= size;
+		index++;
+		p += size;
+	}
+
+	return ret;
+}
+#endif
 
 static void sd_set_flush_flag(struct scsi_disk *sdkp)
 {
@@ -3005,6 +3171,11 @@ static void sd_probe_async(void *data, async_cookie_t cookie)
 	device_add_disk(dev, gd);
 	if (sdkp->capacity)
 		sd_dif_config_host(sdkp);
+
+#ifdef CONFIG_MACH_MEIZU_SDM845
+	if (!strcmp(gd->disk_name, "sda"))
+    	ufs_disk = gd;
+#endif
 
 	sd_revalidate_disk(gd);
 
