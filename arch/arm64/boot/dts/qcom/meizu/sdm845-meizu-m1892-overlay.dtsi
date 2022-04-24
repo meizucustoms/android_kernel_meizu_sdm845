@@ -10,4 +10,4 @@
  * GNU General Public License for more details.
  */
 
-#include "overlay/sdm845-meizu-common-overlay.dtsi"
+#include "overlay/sdm845-meizu-overlay.dtsi"

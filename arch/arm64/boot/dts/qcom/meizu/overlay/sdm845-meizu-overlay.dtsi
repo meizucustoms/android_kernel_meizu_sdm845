@@ -10,6 +10,24 @@
  * GNU General Public License for more details.
  */
 
+#include "sdm845-sde-display.dtsi"
+#include "sdm845-mtp.dtsi"
+#include "sdm845-audio-overlay.dtsi"
+
+&pm8998_vadc {
+    chan@50 {
+        label = "temp_typec";
+        reg = <0x50>;
+        qcom,decimation = <0x02>;
+        qcom,pre-div-channel-scaling = <0x00>;
+        qcom,calibration-type = "absolute";
+        qcom,scale-function = <0x02>;
+        qcom,hw-settle-time = <0x02>;
+        qcom,fast-avg-setup = <0x00>;
+        qcom,cal-val = <0x00>;
+    };
+};
+
 &tlmm {
     fusb_irq_pin {
         fusb_irq_pin_input: fusb_irq_pin_input {
@@ -17,10 +35,9 @@
                 pins = "gpio40";
                 function = "gpio";
             };
-
             config {
                 pins = "gpio40";
-                drive-strength = <2>;
+                drive-strength = <0x02>;
                 bias-pull-up;
                 input-enable;
             };
@@ -29,37 +46,23 @@
 };
 
 &vendor {
-    switch_charger {
+    switch_charger: switch_charger {
         compatible = "meizu,switch_charger";
         interrupt-parent = <&tlmm>;
-        interrupts = <40 0x3>;
+        interrupts = <0x28 0x03>;
         interrupt-names = "fusb_irq";
         pinctrl-0 = <&fusb_irq_pin_input>;
         pinctrl-names = "default";
-        fusb_irq-gpio = <&tlmm 40 0x0>;
+        fusb_irq-gpio = <&tlmm 0x28 0x00>;
     };
 
-    usb_thermal {
+    usb_thermal: usb_thermal {
         compatible = "meizu,usb-thermal";
         qcom,channel-num = <0x50>;
-        qcom,temp_typec-vadc = <&temp_typec_vadc>;
+        qcom,temp_typec-vadc = <&pm8998_vadc>;
     };
 
-    ui_soc_psy {
+    ui_soc_psy: ui_soc_psy {
         compatible = "meizu,ui-soc-psy";
-    };
-};
-
-&pm8998_vadc {
-    temp_typec_vadc: chan@50 {
-        label = "temp_typec";
-        reg = <0x50>;
-        qcom,decimation = <2>;
-        qcom,pre-div-channel-scaling = <0>;
-        qcom,calibration-type = "absolute";
-        qcom,scale-function = <2>;
-        qcom,hw-settle-time = <2>;
-        qcom,fast-avg-setup = <0>;
-        qcom,cal-val = <0>;
     };
 };

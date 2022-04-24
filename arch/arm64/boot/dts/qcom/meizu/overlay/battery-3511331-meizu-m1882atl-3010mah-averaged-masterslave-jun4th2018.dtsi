@@ -11,10 +11,6 @@
  */
 
 qcom,3511331_meizu_m1882atl_3010mah_averaged_masterslave_jun4th2018 {
-    qcom,battery-name = "ATL";
-    qcom,battery-type = "3511331_meizu_m1882atl_3010mah_averaged_masterslave_jun4th2018";
-    qcom,gui-version = "PMI8998GUI - 2.0.0.58";
-
     qcom, = <24>;
     qcom,max-voltage-uv = <4400000>;
     qcom,fastchg-current-ma = <2950>;
@@ -22,7 +18,10 @@ qcom,3511331_meizu_m1882atl_3010mah_averaged_masterslave_jun4th2018 {
     qcom,batt-id-kohm = <50>;
     qcom,battery-beta = <3435>;
     qcom,fg-cc-cv-threshold-mv = <4390>;
+    qcom,battery-name = "ATL";
+    qcom,battery-type = "3511331_meizu_m1882atl_3010mah_averaged_masterslave_jun4th2018";
     qcom,checksum = <0xD495>;
+    qcom,gui-version = "PMI8998GUI - 2.0.0.58";
     qcom,fg-profile-data = 
         [bc 22 1b 0d 
          6e 12 27 04 

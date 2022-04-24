@@ -28,6 +28,8 @@
 #include "dsi-panel-nt35597-dualmipi-wqxga-video.dtsi"
 #include "dsi-panel-nt35597-dualmipi-wqxga-cmd.dtsi"
 #include "dsi-panel-nt36850-truly-dualmipi-wqhd-cmd.dtsi"
+#include "dsi-panel-sofef00m-amoled-fhd-cmd.dtsi"
+#include "dsi-panel-test-dualmipi-oled-cmd.dtsi"
 #include <dt-bindings/clock/mdss-10nm-pll-clk.h>
 
 &soc {
@@ -91,7 +93,7 @@
 			qcom,supply-max-voltage = <1800000>;
 			qcom,supply-enable-load = <62000>;
 			qcom,supply-disable-load = <80>;
-			qcom,supply-post-on-sleep = <20>;
+			qcom,supply-post-on-sleep = <1>;
 		};
 
 		qcom,panel-supply-entry@1 {
@@ -101,7 +103,7 @@
 			qcom,supply-max-voltage = <3000000>;
 			qcom,supply-enable-load = <857000>;
 			qcom,supply-disable-load = <0>;
-			qcom,supply-post-on-sleep = <0>;
+			qcom,supply-post-off-sleep = <1>;
 		};
 	};
 
@@ -249,8 +251,8 @@
 
 		qcom,dsi-ctrl = <&mdss_dsi1>;
 		qcom,dsi-phy = <&mdss_dsi_phy1>;
-		clocks = <&mdss_dsi1_pll BYTECLK_MUX_1_CLK>,
-			<&mdss_dsi1_pll PCLK_MUX_1_CLK>;
+		clocks = <&mdss_dsi1_pll SHADOW_PCLK_SRC_MUX_0_CLK>,
+			<&mdss_dsi1_pll PLL_OUT_DIV_1_CLK>;
 		clock-names = "src_byte_clk", "src_pixel_clk";
 
 		pinctrl-names = "panel_active", "panel_suspend";
@@ -272,8 +274,8 @@
 
 		qcom,dsi-ctrl = <&mdss_dsi1>;
 		qcom,dsi-phy = <&mdss_dsi_phy1>;
-		clocks = <&mdss_dsi1_pll BYTECLK_MUX_1_CLK>,
-			<&mdss_dsi1_pll PCLK_MUX_1_CLK>;
+		clocks = <&mdss_dsi1_pll SHADOW_PCLK_SRC_MUX_0_CLK>,
+			<&mdss_dsi1_pll PLL_OUT_DIV_1_CLK>;
 		clock-names = "src_byte_clk", "src_pixel_clk";
 
 		pinctrl-names = "panel_active", "panel_suspend";
@@ -465,7 +467,31 @@
 		ibb-supply = <&ibb_regulator>;
 	};
 
-	qcom,dsi-display@17 {};
+	dsi_sofef00m_amoled_cmd_display: qcom,dsi-display@17 {
+		compatible = "qcom,dsi-display";
+		label = "dsi_sofef00m_amoled_cmd_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl = <&mdss_dsi0>;
+		qcom,dsi-phy = <&mdss_dsi_phy0>;
+		clocks = <&mdss_dsi0_pll BYTECLK_MUX_0_CLK>,
+			<&mdss_dsi0_pll PCLK_MUX_0_CLK>;
+		clock-names = "src_byte_clk", "src_pixel_clk";
+
+		pinctrl-names = "panel_active", "panel_suspend";
+		pinctrl-0 = <&sde_dsi_active &sde_te_active>;
+		pinctrl-1 = <&sde_dsi_suspend &sde_te_suspend>;
+		qcom,platform-te-gpio = <&tlmm 10 0>;
+		qcom,platform-reset-gpio = <&pm8998_gpios 8 0>;
+		qcom,platform-err-fg-gpio = <&tlmm 12 0>;
+
+
+		qcom,dsi-panel = <&dsi_sofef00m_amoled_cmd>;
+		vddio-supply = <&lcd_vddio_regulator>;
+		vdd-supply = <&lcd_vdd_regulator>;
+		
+		qcom,dsi-display-active;
+	};
 
 	sde_wb: qcom,wb-display@0 {
 		compatible = "qcom,wb-display";
@@ -491,6 +517,10 @@
 	pinctrl-1 = <&sde_dp_aux_suspend &sde_dp_usbplug_cc_suspend>;
 	qcom,aux-en-gpio = <&tlmm 43 0>;
 	qcom,usbplug-cc-gpio = <&tlmm 38 0>;
+};
+
+&mdss_mdp {
+	connectors = <&sde_rscc &sde_wb &dsi_sofef00m_amoled_cmd_display>;
 };
 
 &dsi_dual_nt35597_truly_video {
@@ -792,13 +822,6 @@
 };
 
 &dsi_dual_nt36850_truly_cmd {
-	qcom,mdss-dsi-t-clk-post = <0x0E>;
-	qcom,mdss-dsi-t-clk-pre = <0x30>;
-
-	qcom,mdss-dsi-panel-timings = [da 34 24 00 64 68 28 38 2a 03 04 00];
-	qcom,cmd-sync-wait-broadcast;
-	qcom,mdss-dsi-reset-sequence = <1 10>, <0 10>, <1 10>;
-
 	qcom,mdss-dsi-display-timings {
 		timing@0 {
 			qcom,mdss-dsi-panel-phy-timings = [00 1f 08 08 24 23 08
@@ -806,22 +829,23 @@
 			qcom,display-topology = <2 0 2>,
 				<1 0 2>;
 			qcom,default-topology-index = <0>;
-			qcom,mdss-dsi-on-command = 
-				[15 01 00 00 00 00 02 ff 10 
-				 15 01 00 00 00 00 02 fb 01 
-				 15 01 00 00 00 00 02 36 00 
-				 15 01 00 00 00 00 02 35 00 
-				 39 01 00 00 00 00 03 44 03 e8 
-				 15 01 00 00 00 00 02 51 ff 
-				 15 01 00 00 00 00 02 53 2c 
-				 15 01 00 00 00 00 02 55 01 
-				 05 01 00 00 0a 00 02 20 00 
-				 15 01 00 00 00 00 02 bb 10 
-				 05 01 00 00 78 00 02 11 00 
-				 05 01 00 00 14 00 02 29 00];
-			qcom,mdss-dsi-off-command = 
-				[05 01 00 00 14 00 02 28 00 
-				 05 01 00 00 78 00 02 10 00];
+		};
+	};
+};
+
+&dsi_sofef00m_amoled_cmd {
+    qcom,platform-reset-gpio = <&pm8998_gpios 8 0>;
+    qcom,platform-te-gpio = <&tlmm 10 0>;
+    qcom,platform-err-fg-gpio = <&tlmm 12 0>;
+
+	qcom,mdss-dsi-display-timings {
+		timing@0 {
+			qcom,mdss-dsi-h-sync-pulse = <0>;
+			qcom,mdss-dsi-panel-phy-timings = [
+				00 20 08 08 24 23 08 08 05 03 04 00
+			];
+			qcom,display-topology = <1 0 1>, <2 0 1>;
+			qcom,default-topology-index = <0>;
 		};
 	};
 };
