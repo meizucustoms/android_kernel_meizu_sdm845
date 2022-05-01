@@ -1716,7 +1716,7 @@ static int dcc_remove(struct platform_device *pdev)
 }
 
 static const struct of_device_id msm_dcc_match[] = {
-	{ .compatible = "qcom,dcc-v2"},
+	{ .compatible = "qcom,dcc_v2"},
 	{}
 };
 
