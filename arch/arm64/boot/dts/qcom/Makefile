@@ -1,4 +1,6 @@
-ifneq ($(CONFIG_MACH_MEIZU_SDM845), y)
+ifeq ($(CONFIG_MACH_MEIZU_SDM845), y)
+include meizu/Makefile
+else
 dtb-$(CONFIG_ARCH_QCOM)	+= apq8016-sbc.dtb msm8916-mtp.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8996-mtp.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= apq8096-db820c.dtb
@@ -674,29 +676,6 @@ dtb-$(CONFIG_ARCH_SDM429) += sdm429-mtp.dtb \
 endif
 
 dtb-$(CONFIG_ARCH_SDM845_VM) += sdm845-vm.dtb
-else
-
-# Meizu 16th
-ifeq ($(CONFIG_MACH_MEIZU_M1882), y)
-# DTBO
-dtbo-$(CONFIG_ARCH_SDM845) := \
-	sdm845-v2.1-mtp-meizu-m1882-overlay.dtbo
-sdm845-v2.1-mtp-meizu-m1882-overlay.dtbo-base := sdm845-v2.1-meizu-m1882.dtb
-# DTB
-dtb-$(CONFIG_ARCH_SDM845) := \
-	sdm845-v2.1-meizu-m1882.dtb
-endif
-
-# Meizu 16th Plus
-ifeq ($(CONFIG_MACH_MEIZU_M1892), y)
-# DTBO
-dtbo-$(CONFIG_ARCH_SDM845) := \
-	sdm845-v2.1-mtp-meizu-m1892-overlay.dtbo
-sdm845-v2.1-mtp-meizu-m1892-overlay.dtbo-base := sdm845-v2.1-meizu-m1892.dtb
-# DTB
-dtb-$(CONFIG_ARCH_SDM845) := \
-	sdm845-v2.1-meizu-m1892.dtb
-endif
 
 endif
 

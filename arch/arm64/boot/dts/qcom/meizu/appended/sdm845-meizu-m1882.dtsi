@@ -10,16 +10,4 @@
  * GNU General Public License for more details.
  */
 
-/ {
-    aliases {
-        spi1 = &qupv3_se0_spi;
-        spi2 = &qupv3_se7_spi;
-    };
-};
-
-&soc {
-    qupv3_se0_spi: spi@880000 {
-        pinctrl-0 = <&qupv3_se0_spi_active &qupv3_se0_spi_cs1_active>;
-		pinctrl-1 = <&qupv3_se0_spi_sleep &qupv3_se0_spi_cs1_sleep>;
-    };
-};
+#include "sdm845-v2.1.dtsi"

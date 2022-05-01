@@ -10,22 +10,4 @@
  * GNU General Public License for more details.
  */
 
-/ {
-    reserved-memory {
-        ramoops_mem: ramoops@9ff00000 {
-            compatible = "ramoops";
-            reg = <0x00 0x9ff00000 0x00 0x200000>;
-            record-size = <0x4000>;
-            console-size = <0x40000>;
-        };
-        psn_mem: psn_mem_region@a0100000 {
-            compatible = "removed-dma-pool";
-            no-map;
-            reg = <0x00 0xa0100000 0x00 0x400>;
-        };
-    };
-};
-
-&removed_region {
-    reg = <0 0x85fc0000 0 0x4b40000>;
-};
+#include "sdm845-meizu-overlay.dtsi"
