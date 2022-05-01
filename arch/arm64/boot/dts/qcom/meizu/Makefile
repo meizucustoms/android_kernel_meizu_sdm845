@@ -18,7 +18,6 @@ dtbo-$(CONFIG_ARCH_SDM845) := \
 sdm845-v2.1-mtp-meizu-m1882-overlay.dtbo-base := sdm845-v2.1-meizu-m1882.dtb
 # DTB
 dtb-$(CONFIG_ARCH_SDM845) := \
-	rtic/rtic-meizu-m1882.dtb \
 	sdm845-v2.1-meizu-m1882.dtb
 endif
 
@@ -30,7 +29,6 @@ dtbo-$(CONFIG_ARCH_SDM845) := \
 sdm845-v2.1-mtp-meizu-m1892-overlay.dtbo-base := sdm845-v2.1-meizu-m1892.dtb
 # DTB
 dtb-$(CONFIG_ARCH_SDM845) := \
-	rtic/rtic-meizu-m1892.dtb \
 	sdm845-v2.1-meizu-m1892.dtb
 endif
 
