@@ -33,3 +33,7 @@ dtb-$(CONFIG_ARCH_SDM845) := \
 	rtic/rtic-meizu-m1892.dtb \
 	sdm845-v2.1-meizu-m1892.dtb
 endif
+
+always		:= $(dtb-y)
+subdir-y	:= $(dts-dirs)
+clean-files	:= *.dtb
