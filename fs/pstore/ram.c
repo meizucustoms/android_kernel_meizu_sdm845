@@ -729,11 +729,7 @@ static const struct of_device_id dt_match[] = {
 	{}
 };
 
-#ifdef CONFIG_MACH_MEIZU_SDM845
-struct platform_driver ramoops_driver = {
-#else
 static struct platform_driver ramoops_driver = {
-#endif
 	.probe		= ramoops_probe,
 	.remove		= ramoops_remove,
 	.driver		= {
@@ -742,7 +738,6 @@ static struct platform_driver ramoops_driver = {
 	},
 };
 
-#ifndef CONFIG_MACH_MEIZU_SDM845
 static void ramoops_register_dummy(void)
 {
 	if (!mem_size)
@@ -791,15 +786,6 @@ static void __exit ramoops_exit(void)
 	platform_device_unregister(dummy);
 	kfree(dummy_data);
 }
-module_exit(ramoops_exit);
-
-#else
-static void __exit ramoops_exit(void)
-{
-	platform_driver_unregister(&ramoops_driver);
-}
-#endif
-
 module_exit(ramoops_exit);
 
 MODULE_LICENSE("GPL");
