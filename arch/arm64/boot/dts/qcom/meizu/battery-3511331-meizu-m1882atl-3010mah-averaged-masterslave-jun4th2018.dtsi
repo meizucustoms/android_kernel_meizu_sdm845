@@ -1,0 +1,83 @@
+/* Copyright (c) 2022, MeizuCustoms enthusiasts
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+qcom,3511331_meizu_m1882atl_3010mah_averaged_masterslave_jun4th2018 {
+    qcom,battery-name = "ATL";
+    qcom,battery-type = "3511331_meizu_m1882atl_3010mah_averaged_masterslave_jun4th2018";
+    qcom,gui-version = "PMI8998GUI - 2.0.0.58";
+
+    qcom, = <24>;
+    qcom,max-voltage-uv = <4400000>;
+    qcom,fastchg-current-ma = <2950>;
+    qcom,nom-batt-capacity-mah = <3010>;
+    qcom,batt-id-kohm = <50>;
+    qcom,battery-beta = <3435>;
+    qcom,fg-cc-cv-threshold-mv = <4390>;
+    qcom,checksum = <0xD495>;
+    qcom,fg-profile-data = 
+        [bc 22 1b 0d 
+         6e 12 27 04 
+         fd 1c 77 01 
+         7f 05 04 03 
+         fc 17 6e 23 
+         07 45 85 53 
+         98 00 00 00 
+         12 00 00 00 
+         00 00 5d c5 
+         82 cd 19 c3 
+         2b 00 08 00 
+         13 eb e5 f5 
+         b9 fd 3b f2 
+         20 05 a6 0a 
+         93 ec 51 32 
+         1c 06 09 20 
+         27 00 14 00 
+         38 20 eb 04 
+         13 0b a8 05 
+         ce 1c d9 02 
+         35 0c 11 12 
+         91 18 d0 23 
+         e9 4d 2b 5b 
+         6e 00 00 00 
+         0e 00 00 00 
+         00 00 e9 d5 
+         06 c2 03 ca 
+         21 00 00 00 
+         ae f2 e5 f5 
+         3d f5 ec e3 
+         c1 ec e8 01 
+         13 f4 9f 1a 
+         9b 33 cc ff 
+         07 10 00 00 
+         c9 0b 66 46 
+         21 00 40 00 
+         56 01 0a fa 
+         ff 00 00 00 
+         00 00 00 00 
+         00 00 00 00 
+         00 00 00 00 
+         00 00 00 00 
+         00 00 00 00 
+         00 00 00 00 
+         00 00 00 00 
+         00 00 00 00 
+         00 00 00 00 
+         00 00 00 00 
+         00 00 00 00 
+         00 00 00 00 
+         00 00 00 00 
+         00 00 00 00 
+         00 00 00 00 
+         00 00 00 00 
+         00 00 00 00 
+         00 00 00 00];
+};

@@ -1,0 +1,192 @@
+/* Copyright (c) 2022, MeizuCustoms enthusiasts
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&audio_apr {
+    msm_audio_ion: qcom,msm-audio-ion {
+		compatible = "qcom,msm-audio-ion";
+		qcom,smmu-version = <2>;
+		qcom,smmu-enabled;
+        qcom,smmu-sid-mask = <0x00 0x0f>;
+		iommus = <&apps_smmu 0x1821 0>;
+	};
+};
+
+&soc {
+    /delete-node/ qcom,msm-audio-ion;
+};
+
+&snd_934x {
+    qcom,audio-routing = 
+        "AIF4 VI", "MCLK", 
+        "RX_BIAS", "MCLK", 
+        "MADINPUT", "MCLK", 
+        "hifi amp", "LINEOUT1", 
+        "hifi amp", "LINEOUT2", 
+        "AMIC1", "MIC BIAS1", 
+        "MIC BIAS1", "Handset Mic", 
+        "AMIC2", "MIC BIAS2", 
+        "MIC BIAS2", "Headset Mic", 
+        "AMIC3", "MIC BIAS3", 
+        "MIC BIAS2", "ANCRight Headset Mic", 
+        "AMIC4", "MIC BIAS2", 
+        "MIC BIAS2", "ANCLeft Headset Mic", 
+        "AMIC5", "MIC BIAS3", 
+        "MIC BIAS3", "Handset Mic", 
+        "DMIC0", "MIC BIAS1", 
+        "MIC BIAS1", "Digital Mic0", 
+        "DMIC1", "MIC BIAS1", 
+        "MIC BIAS1", "Digital Mic1", 
+        "DMIC2", "MIC BIAS3", 
+        "MIC BIAS3", "Digital Mic2", 
+        "DMIC3", "MIC BIAS3", 
+        "MIC BIAS3", "Digital Mic3", 
+        "DMIC4", "MIC BIAS4", 
+        "MIC BIAS4", "Digital Mic4", 
+        "DMIC5", "MIC BIAS4", 
+        "MIC BIAS4", "Digital Mic5";
+    asoc-cpu = <&dai_hdmi>, <&dai_dp>,
+            <&dai_mi2s0>, <&dai_mi2s1>,
+            <&dai_mi2s2>, <&dai_mi2s3>,
+            <&dai_pri_auxpcm>, <&dai_sec_auxpcm>,
+            <&dai_tert_auxpcm>, <&dai_quat_auxpcm>,
+            <&sb_0_rx>, <&sb_0_tx>, <&sb_1_rx>, <&sb_1_tx>,
+            <&sb_2_rx>, <&sb_2_tx>, <&sb_3_rx>, <&sb_3_tx>,
+            <&sb_4_rx>, <&sb_4_tx>, <&sb_5_tx>,
+            <&afe_pcm_rx>, <&afe_pcm_tx>, <&afe_proxy_rx>,
+            <&afe_proxy_tx>, <&incall_record_rx>,
+            <&incall_record_tx>, <&incall_music_rx>,
+            <&incall_music_2_rx>, <&sb_5_rx>, <&sb_6_rx>,
+            <&sb_7_rx>, <&sb_7_tx>, <&sb_8_tx>,
+            <&usb_audio_rx>, <&usb_audio_tx>,
+            <&dai_pri_tdm_rx_0>, <&dai_pri_tdm_tx_0>,
+            <&dai_sec_tdm_rx_0>, <&dai_sec_tdm_tx_0>,
+            <&dai_tert_tdm_rx_0>, <&dai_tert_tdm_tx_0>,
+            <&dai_quat_tdm_rx_0>, <&dai_quat_tdm_tx_0>;
+    asoc-cpu-names = "msm-dai-q6-hdmi.8",  "msm-dai-q6-dp.24608",
+            "msm-dai-q6-mi2s.0", "msm-dai-q6-mi2s.1",
+            "msm-dai-q6-mi2s.2", "msm-dai-q6-mi2s.3",
+            "msm-dai-q6-auxpcm.1", "msm-dai-q6-auxpcm.2",
+            "msm-dai-q6-auxpcm.3", "msm-dai-q6-auxpcm.4",
+            "msm-dai-q6-dev.16384", "msm-dai-q6-dev.16385",
+            "msm-dai-q6-dev.16386", "msm-dai-q6-dev.16387",
+            "msm-dai-q6-dev.16388", "msm-dai-q6-dev.16389",
+            "msm-dai-q6-dev.16390", "msm-dai-q6-dev.16391",
+            "msm-dai-q6-dev.16392", "msm-dai-q6-dev.16393",
+            "msm-dai-q6-dev.16395", "msm-dai-q6-dev.224",
+            "msm-dai-q6-dev.225", "msm-dai-q6-dev.241",
+            "msm-dai-q6-dev.240", "msm-dai-q6-dev.32771",
+            "msm-dai-q6-dev.32772", "msm-dai-q6-dev.32773",
+            "msm-dai-q6-dev.32770", "msm-dai-q6-dev.16394",
+            "msm-dai-q6-dev.16396", "msm-dai-q6-dev.16398",
+            "msm-dai-q6-dev.16399", "msm-dai-q6-dev.16401",
+            "msm-dai-q6-dev.28672", "msm-dai-q6-dev.28673",
+            "msm-dai-q6-tdm.36864", "msm-dai-q6-tdm.36865",
+            "msm-dai-q6-tdm.36880", "msm-dai-q6-tdm.36881",
+            "msm-dai-q6-tdm.36896", "msm-dai-q6-tdm.36897",
+            "msm-dai-q6-tdm.36912", "msm-dai-q6-tdm.36913";
+    
+    qcom,msm-mbhc-hphl-swh = <1>;
+    qcom,msm-mbhc-gnd-swh = <1>;
+    qcom,msm-mbhc-hs-mic-max-threshold-mv = <2550>;
+    qcom,msm-mbhc-hs-mic-min-threshold-mv = <75>;
+
+    qcom,msm-mbhc-usbc-audio-supported;
+
+    qcom,usbc-analog-en1-gpio = <0x54>;
+
+    pinctrl-names = 
+        "aud_active", "aud_sleep", 
+        "quat-mi2s-sleep", "quat-mi2s-active", 
+        "quat-mi2s-sleep-b2", "quat-mi2s-active-b2";
+    pinctrl-0 = <&wcd_usbc_analog_en2_active>;
+    pinctrl-1 = <&wcd_usbc_analog_en2_idle>;
+    pinctrl-2 = <&quat_mi2s_lines_sleep &quat_mi2s_sd2_sleep>;
+    pinctrl-3 = <&quat_mi2s_lines_active &quat_mi2s_sd2_active>;
+    pinctrl-4 = <&quat_mi2s_lines_sleep>;
+    pinctrl-5 = <&quat_mi2s_lines_active>;
+
+    qcom,wsa-max-devs;
+
+    /delete-node/ qcom,usbc-analog-en2-gpio;
+};
+
+&msm_dai_tdm_quat_rx {
+    qcom,msm-cpudai-tdm-group-num-ports = <1>;
+    qcom,msm-cpudai-tdm-group-port-id = <36912>;
+    /delete-node/ qcom,msm-dai-q6-tdm-quat-rx-1;
+};
+
+&dai_mi2s3 {
+    qcom,msm-mi2s-rx-lines = <4>;
+    qcom,msm-mi2s-tx-lines = <3>;
+    qcom,msm-mi2s-rx-lines-b2 = <1>;
+    qcom,msm-mi2s-tx-lines-b2 = <2>;
+};
+
+&soc {
+    qcom,msm-dai-q6 {
+        /delete-node/ qcom,msm-dai-q6-afe-loopback-tx;
+        /delete-node/ qcom,msm-dai-q6-proxy-rx;
+        /delete-node/ qcom,msm-dai-q6-proxy-tx;
+    };
+};
+
+&qupv3_se0_spi {
+    cs35l41_0: cs35l41@0 {
+        #sound-dai-cells = <1>;
+        compatible = "cirrus,cs35l41";
+        spi-max-frequency = <12000000>;
+        reg = <0x0>;
+        interrupt-parent = <&tlmm>;
+        interrupts = <11 0x08>;
+        reset-gpios = <&tlmm 7 0x1>;
+        VA-supply = <&pm8998_s4>;
+        VP-supply = <&audio_vsys_regulator>;
+        cirrus,boost-peak-milliamp = <3500>;
+        cirrus,boost-ind-nanohenry = <1000>;
+        cirrus,boost-cap-microfarad = <15>;
+        cirrus,audio-channel = <9>;
+        cirrus,advisory-channel = <9>;
+
+        cirrus,gpio-config2 {
+            cirrus,gpio-src-select = <4>;
+            cirrus,gpio-output-enable;
+        };
+    };
+
+    cs35l41_1: cs35l41@1 {
+        #sound-dai-cells = <1>;
+        compatible = "cirrus,cs35l41";
+        spi-max-frequency = <12000000>;
+        reg = <0x1>;
+        interrupt-parent = <&tlmm>;
+        interrupts = <30 0x08>;
+        reset-gpios = <&tlmm 7 0x1>;
+        VA-supply = <&pm8998_s4>;
+        VP-supply = <&audio_vsys_regulator>;
+        cirrus,boost-peak-milliamp = <3500>;
+        cirrus,boost-ind-nanohenry = <1000>;
+        cirrus,boost-cap-microfarad = <15>;
+        cirrus,stereo-config;
+        cirrus,audio-channel = <8>;
+        cirrus,advisory-channel = <8>;
+
+        cirrus,gpio-config2 {
+            cirrus,gpio-src-select = <4>;
+            cirrus,gpio-output-enable;
+        };
+    };
+};
+
+&wcd934x_cdc {
+    qcom,cdc-micbias2-mv = <2700>;
+};

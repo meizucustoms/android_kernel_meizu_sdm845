@@ -12,25 +12,22 @@
 
 # Meizu 16th
 ifeq ($(CONFIG_MACH_MEIZU_M1882), y)
-# DTBO
-dtbo-$(CONFIG_ARCH_SDM845) := \
-	sdm845-v2.1-mtp-meizu-m1882-overlay.dtbo
-sdm845-v2.1-mtp-meizu-m1882-overlay.dtbo-base := sdm845-v2.1-meizu-m1882.dtb
-# DTB
-dtb-$(CONFIG_ARCH_SDM845) := \
-	sdm845-v2.1-meizu-m1882.dtb
+current-meizu-device := m1882
 endif
 
 # Meizu 16th Plus
 ifeq ($(CONFIG_MACH_MEIZU_M1892), y)
-# DTBO
-dtbo-$(CONFIG_ARCH_SDM845) := \
-	sdm845-v2.1-mtp-meizu-m1892-overlay.dtbo
-sdm845-v2.1-mtp-meizu-m1892-overlay.dtbo-base := sdm845-v2.1-meizu-m1892.dtb
+current-meizu-device := m1892
+endif
+
 # DTB
 dtb-$(CONFIG_ARCH_SDM845) := \
-	sdm845-v2.1-meizu-m1892.dtb
-endif
+	sdm845-v2.1-meizu-$(current-meizu-device).dtb
+
+# Placeholder DTBO
+dtbo-$(CONFIG_ARCH_SDM845) := \
+	placeholder-dtbo-$(current-meizu-device).dtbo
+placeholder-dtbo-$(current-meizu-device).dtbo-base := sdm845-v2.1-meizu-$(current-meizu-device).dtb
 
 always		:= $(dtb-y)
 subdir-y	:= $(dts-dirs)

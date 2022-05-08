@@ -13,12 +13,10 @@
 
 /dts-v1/;
 
-#include "appended/sdm845-meizu-m1882.dtsi"
+#include "sdm845-meizu-m1882.dtsi"
 
 / {
 	model = "Qualcomm Technologies, Inc. SDM845 v2.1 SoC";
 	compatible = "qcom,sdm845";
-	qcom,msm-id = <0x141 0x20001>;
 	qcom,board-id = <0 0>;
 };
-

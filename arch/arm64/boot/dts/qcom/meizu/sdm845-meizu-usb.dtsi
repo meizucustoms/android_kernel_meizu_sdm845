@@ -1,0 +1,47 @@
+/* Copyright (c) 2022, MeizuCustoms enthusiasts
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+    usb0: ssusb@a600000 {
+        qcom,pm-qos-latency = <52>;
+        qcom,msm-bus,vectors-KBps =
+                <MSM_BUS_MASTER_USB3 MSM_BUS_SLAVE_EBI_CH0 0 0>,
+                <MSM_BUS_MASTER_USB3 MSM_BUS_SLAVE_IPA_CFG 0 0>,
+                <MSM_BUS_MASTER_AMPSS_M0 MSM_BUS_SLAVE_USB3 0 0>,
+                <MSM_BUS_MASTER_USB3
+                    MSM_BUS_SLAVE_EBI_CH0 1000000 1400000>,
+                <MSM_BUS_MASTER_USB3
+                    MSM_BUS_SLAVE_IPA_CFG 2400 4800>,
+                <MSM_BUS_MASTER_AMPSS_M0 MSM_BUS_SLAVE_USB3 0 40000>;
+        
+        dwc3@a600000 {
+            maximum-speed = "high-speed";
+            usb-phy = <&qusb_phy0>, <&usb_nop_phy>;
+        };
+    };
+
+    usb1: ssusb@a800000 {     
+        dwc3@a800000 {
+            /delete-property/ dr_mode;
+        };
+    };
+
+    qusb_phy0: qusb@88e2000 {
+        pinctrl-names = "atest_usb13_suspend", "atest_usb13_active";
+        pinctrl-0 = <&atest_usb13_oe_suspend &atest_usb13_suspend>;
+        pinctrl-1 = <&atest_usb13_oe_active &atest_usb13_active>;
+    };
+
+    usb_qmp_dp_phy: ssphy@88e8000 {
+        status = "disabled";
+    };
+};
