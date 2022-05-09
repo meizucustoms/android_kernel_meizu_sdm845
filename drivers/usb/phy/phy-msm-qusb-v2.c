@@ -122,9 +122,15 @@ struct qusb_phy {
 	struct regulator	*vdda18;
 	int			vdd_levels[3]; /* none, low, high */
 	int			init_seq_len;
+#ifdef CONFIG_MACH_MEIZU_SDM845
+	int			init_seq_len2;
+#endif
 	int			*qusb_phy_init_seq;
 	int			host_init_seq_len;
 	int			*qusb_phy_host_init_seq;
+#ifdef CONFIG_MACH_MEIZU_SDM845
+	int         *qusb_phy_init_seq_temp;
+#endif
 
 	unsigned int		*phy_reg;
 	int			qusb_phy_reg_offset_cnt;
@@ -601,9 +607,23 @@ static int qusb_phy_init(struct usb_phy *phy)
 				qphy->emu_init_seq,
 					qphy->emu_init_seq_len, 10000);
 
+#ifdef CONFIG_MACH_MEIZU_SDM845
+		if (qphy->phy.flags & PHY_HOST_MODE) {
+			if (qphy->qusb_phy_init_seq_temp)
+				qusb_phy_write_seq(qphy->base, qphy->qusb_phy_init_seq_temp,
+						qphy->init_seq_len2, 0);
+			pr_info("%s: Using temp init seq\n", __func__);
+		} else {
+			if (qphy->qusb_phy_init_seq)
+				qusb_phy_write_seq(qphy->base, qphy->qusb_phy_init_seq,
+						qphy->init_seq_len, 0);
+			pr_info("%s: Using default init seq\n", __func__);
+		}
+#else
 		if (qphy->qusb_phy_init_seq)
 			qusb_phy_write_seq(qphy->base, qphy->qusb_phy_init_seq,
 					qphy->init_seq_len, 0);
+#endif
 
 		/* Wait for 5ms as per QUSB2 RUMI sequence */
 		usleep_range(5000, 7000);
@@ -1299,6 +1319,31 @@ static int qusb_phy_probe(struct platform_device *pdev)
 			"error allocating memory for phy_init_seq\n");
 		}
 	}
+
+#ifdef CONFIG_MACH_MEIZU_SDM845
+	size = 0;
+	of_get_property(dev->of_node, "qcom,qusb-phy-init-temp-seq", &size);
+	if (size) {
+		qphy->qusb_phy_init_seq_temp = devm_kzalloc(dev,
+						size, GFP_KERNEL);
+		if (qphy->qusb_phy_init_seq_temp) {
+			qphy->init_seq_len2 =
+				(size / sizeof(*qphy->qusb_phy_init_seq_temp));
+			if (qphy->init_seq_len2 % 2) {
+				dev_err(dev, "invalid init_seq_len2\n");
+				return -EINVAL;
+			}
+
+			of_property_read_u32_array(dev->of_node,
+				"qcom,qusb-phy-init-temp-seq",
+				qphy->qusb_phy_init_seq_temp,
+				qphy->init_seq_len2);
+		} else {
+			dev_err(dev,
+			"error allocating memory for phy_init_seq_temp\n");
+		}
+	}
+#endif
 
 	qphy->host_init_seq_len = of_property_count_elems_of_size(dev->of_node,
 				"qcom,qusb-phy-host-init-seq",
