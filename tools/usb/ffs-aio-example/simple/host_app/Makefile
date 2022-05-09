@@ -1,6 +1,6 @@
 CC = gcc
-LIBUSB_CFLAGS = $(shell pkg-config --cflags libusb-1.0)
-LIBUSB_LIBS = $(shell pkg-config --libs libusb-1.0)
+LIBUSB_CFLAGS = -I/usr/include/libusb-1.0
+LIBUSB_LIBS = -lusb-1.0
 WARNINGS = -Wall -Wextra
 CFLAGS = $(LIBUSB_CFLAGS) $(WARNINGS)
 LDFLAGS = $(LIBUSB_LIBS)
