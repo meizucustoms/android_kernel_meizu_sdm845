@@ -14,6 +14,33 @@
 # Based on the ia64 boot/Makefile.
 #
 
+ifeq ($(CONFIG_MACH_MEIZU_SDM845), y)
+# Meizu 16th
+ifeq ($(CONFIG_MACH_MEIZU_M1882), y)
+current-meizu-device := m1882
+endif
+
+# Meizu 16th Plus
+ifeq ($(CONFIG_MACH_MEIZU_M1892), y)
+current-meizu-device := m1892
+endif
+
+current-meizu-device-dtb := sdm845-v2.1-meizu-$(current-meizu-device).dtb
+current-meizu-device-dtbo := sdm845-v2.1-meizu-$(current-meizu-device)-overlay.dtb
+current-meizu-device-placeholder-dtbo := placeholder-dtbo-$(current-meizu-device)
+current-meizu-device-overlayed-dtb := overlayed-meizu-$(current-meizu-device).dtb
+
+$(obj)/dts/qcom/meizu/$(current-meizu-device-placeholder-dtbo).dtbo: $(src)/dts/qcom/meizu/$(current-meizu-device-placeholder-dtbo).dts FORCE
+	$(call if_changed_dep,dtc)
+
+# Overlayed DTB
+$(obj)/dts/qcom/meizu/$(current-meizu-device-overlayed-dtb): $(obj)/dts/qcom/meizu/$(current-meizu-device-dtbo) $(obj)/dts/qcom/meizu/$(current-meizu-device-dtb) $(obj)/dts/qcom/meizu/$(current-meizu-device-placeholder-dtbo).dtbo
+	$(DT_OVERLAY_APPLY) \
+		$(obj)/dts/qcom/meizu/$(current-meizu-device-dtb) \
+		$(obj)/dts/qcom/meizu/$(current-meizu-device-dtbo) \
+		$(obj)/dts/qcom/meizu/$(current-meizu-device-overlayed-dtb)
+endif
+
 include $(srctree)/arch/arm64/boot/dts/Makefile
 
 OBJCOPYFLAGS_Image :=-O binary -R .note -R .note.gnu.build-id -R .comment -S
@@ -26,6 +53,10 @@ DTB_LIST := $(addsuffix .dtb,$(DTB_NAMES))
 DTB_OBJS := $(addprefix $(obj)/dts/,$(DTB_LIST))
 else
 DTB_OBJS := $(shell find $(obj)/dts/ -name \*.dtb)
+endif
+
+ifeq ($(CONFIG_MACH_MEIZU_SDM845), y)
+DTB_OBJS := $(obj)/dts/qcom/meizu/$(current-meizu-device-overlayed-dtb)
 endif
 
 # Add RTIC DTB to the DTB list if RTIC MPGen is enabled

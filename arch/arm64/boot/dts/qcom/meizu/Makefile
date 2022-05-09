@@ -10,27 +10,11 @@
 # GNU General Public License for more details.
 #
 
-# Meizu 16th
-ifeq ($(CONFIG_MACH_MEIZU_M1882), y)
-# DTBO
-dtbo-$(CONFIG_ARCH_SDM845) := \
-	sdm845-v2.1-mtp-meizu-m1882-overlay.dtbo
-sdm845-v2.1-mtp-meizu-m1882-overlay.dtbo-base := sdm845-v2.1-meizu-m1882.dtb
 # DTB
 dtb-$(CONFIG_ARCH_SDM845) := \
-	sdm845-v2.1-meizu-m1882.dtb
-endif
-
-# Meizu 16th Plus
-ifeq ($(CONFIG_MACH_MEIZU_M1892), y)
-# DTBO
-dtbo-$(CONFIG_ARCH_SDM845) := \
-	sdm845-v2.1-mtp-meizu-m1892-overlay.dtbo
-sdm845-v2.1-mtp-meizu-m1892-overlay.dtbo-base := sdm845-v2.1-meizu-m1892.dtb
-# DTB
-dtb-$(CONFIG_ARCH_SDM845) := \
-	sdm845-v2.1-meizu-m1892.dtb
-endif
+	$(current-meizu-device-dtbo) \
+	$(current-meizu-device-dtb) \
+	$(current-meizu-device-overlayed-dtb)
 
 always		:= $(dtb-y)
 subdir-y	:= $(dts-dirs)
