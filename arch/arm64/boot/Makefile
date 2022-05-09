@@ -35,7 +35,7 @@ $(obj)/dts/qcom/meizu/$(current-meizu-device-placeholder-dtbo).dtbo: $(src)/dts/
 
 # Overlayed DTB
 $(obj)/dts/qcom/meizu/$(current-meizu-device-overlayed-dtb): $(obj)/dts/qcom/meizu/$(current-meizu-device-dtbo) $(obj)/dts/qcom/meizu/$(current-meizu-device-dtb) $(obj)/dts/qcom/meizu/$(current-meizu-device-placeholder-dtbo).dtbo
-	$(DT_OVERLAY_APPLY) \
+	$(DTC_OVERLAY_TEST_EXT) \
 		$(obj)/dts/qcom/meizu/$(current-meizu-device-dtb) \
 		$(obj)/dts/qcom/meizu/$(current-meizu-device-dtbo) \
 		$(obj)/dts/qcom/meizu/$(current-meizu-device-overlayed-dtb)
