@@ -2285,6 +2285,11 @@ extern unsigned ext4_free_clusters_after_init(struct super_block *sb,
 					      struct ext4_group_desc *gdp);
 ext4_fsblk_t ext4_inode_to_goal_block(struct inode *);
 
+static inline bool ext4_encrypted_inode(struct inode *inode)
+{
+	return ext4_test_inode_flag(inode, EXT4_INODE_ENCRYPT);
+}
+
 #ifdef CONFIG_FS_ENCRYPTION
 static inline void ext4_fname_from_fscrypt_name(struct ext4_filename *dst,
 						const struct fscrypt_name *src)

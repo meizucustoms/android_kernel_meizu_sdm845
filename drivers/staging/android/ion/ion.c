@@ -416,7 +416,7 @@ static struct ion_handle* ion_handle_get_check_overflow(struct ion_handle *handl
 	return handle;
 }
 
-static int ion_handle_put_nolock(struct ion_handle *handle)
+int ion_handle_put_nolock(struct ion_handle *handle)
 {
 	int ret;
 
