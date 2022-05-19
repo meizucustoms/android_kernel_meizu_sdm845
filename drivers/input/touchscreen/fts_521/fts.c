@@ -3229,38 +3229,34 @@ static int parse_dt(struct device *dev, struct fts_hw_platform_data *bdata)
 	struct fts_config_info *config_info;
 	u32 temp_val;
 
-	bdata->irq_gpio = of_get_named_gpio_flags(np, "fts,irq-gpio", 0, NULL);
+	bdata->irq_gpio = of_get_named_gpio_flags(np, "st,irq-gpio", 0, NULL);
 
 	logError(0, "%s irq_gpio = %d\n", tag, bdata->irq_gpio);
 
-	retval = of_property_read_string(np, "fts,pwr-reg-name", &name);
+	retval = of_property_read_string(np, "st,regulator_dvdd", &name);
 	if (retval == -EINVAL)
 		bdata->vdd_reg_name = NULL;
 	else if (retval < 0)
 		return retval;
 	else {
 		bdata->vdd_reg_name = name;
-		logError(0, "%s pwr_reg_name = %s\n", tag, name);
+		logError(0, "%s dvdd_reg_name = %s\n", tag, name);
 	}
 
-	retval = of_property_read_string(np, "fts,bus-reg-name", &name);
+	retval = of_property_read_string(np, "st,regulator_avdd", &name);
 	if (retval == -EINVAL)
 		bdata->avdd_reg_name = NULL;
 	else if (retval < 0)
 		return retval;
 	else {
 		bdata->avdd_reg_name = name;
-		logError(0, "%s bus_reg_name = %s\n", tag, name);
+		logError(0, "%s avdd_reg_name = %s\n", tag, name);
 	}
 
-	if (of_property_read_bool(np, "fts,reset-gpio-enable")) {
-		bdata->reset_gpio = of_get_named_gpio_flags(np,
-							    "fts,reset-gpio", 0,
-							    NULL);
-		logError(0, "%s reset_gpio =%d\n", tag, bdata->reset_gpio);
-	} else {
-		bdata->reset_gpio = GPIO_NOT_DEFINED;
-	}
+	bdata->reset_gpio = of_get_named_gpio_flags(np,
+							"st,reset-gpio", 0,
+							NULL);
+	logError(0, "%s reset_gpio =%d\n", tag, bdata->reset_gpio);
 
 	return OK;
 }
