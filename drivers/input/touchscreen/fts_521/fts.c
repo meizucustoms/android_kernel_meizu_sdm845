@@ -3160,6 +3160,8 @@ static int fts_set_gpio(struct fts_ts_info *info)
 		goto err_gpio_irq;
 	}
 
+	pinctrl_select_state(bdata->pctrl, bdata->irq_pstate);
+
 	if (bdata->reset_gpio >= 0) {
 		retval = fts_gpio_setup(bdata->reset_gpio, true, 1, 0);
 		if (retval < 0) {
@@ -3185,41 +3187,32 @@ err_gpio_irq:
 
 static int fts_pinctrl_init(struct fts_ts_info *info)
 {
+	struct fts_hw_platform_data *board = info->board;
 	int retval = 0;
 	/* Get pinctrl if target uses pinctrl */
-	info->ts_pinctrl = devm_pinctrl_get(info->dev);
+	board->pctrl = devm_pinctrl_get(info->dev);
 
-	if (IS_ERR_OR_NULL(info->ts_pinctrl)) {
-		retval = PTR_ERR(info->ts_pinctrl);
+	if (IS_ERR_OR_NULL(board->pctrl)) {
+		retval = PTR_ERR(board->pctrl);
 		dev_err(info->dev, "Target does not use pinctrl %d\n", retval);
 		goto err_pinctrl_get;
 	}
 
-	info->pinctrl_state_active
-	    = pinctrl_lookup_state(info->ts_pinctrl, PINCTRL_STATE_ACTIVE);
+	board->irq_pstate
+	    = pinctrl_lookup_state(board->pctrl, PINCTRL_STATE_INT);
 
-	if (IS_ERR_OR_NULL(info->pinctrl_state_active)) {
-		retval = PTR_ERR(info->pinctrl_state_active);
+	if (IS_ERR_OR_NULL(board->irq_pstate)) {
+		retval = PTR_ERR(board->irq_pstate);
 		dev_err(info->dev, "Can not lookup %s pinstate %d\n",
-			PINCTRL_STATE_ACTIVE, retval);
-		goto err_pinctrl_lookup;
-	}
-
-	info->pinctrl_state_suspend
-	    = pinctrl_lookup_state(info->ts_pinctrl, PINCTRL_STATE_SUSPEND);
-
-	if (IS_ERR_OR_NULL(info->pinctrl_state_suspend)) {
-		retval = PTR_ERR(info->pinctrl_state_suspend);
-		dev_dbg(info->dev, "Can not lookup %s pinstate %d\n",
-			PINCTRL_STATE_SUSPEND, retval);
+			PINCTRL_STATE_INT, retval);
 		goto err_pinctrl_lookup;
 	}
 
 	return 0;
 err_pinctrl_lookup:
-	devm_pinctrl_put(info->ts_pinctrl);
+	devm_pinctrl_put(board->pctrl);
 err_pinctrl_get:
-	info->ts_pinctrl = NULL;
+	board->pctrl = NULL;
 	return retval;
 }
 
@@ -3557,6 +3550,12 @@ static int fts_probe(struct spi_device *client)
 		goto ProbeErrorExit_2;
 	}
 
+	error = fts_pinctrl_init(info);
+	if (error) {
+		dev_err(&client->dev, "%s: Failed to init pinctrl\n", __func__);
+		goto ProbeErrorExit_2;
+	}
+
 	logError(0, "%s SET GPIOS: \n", tag);
 	retval = fts_set_gpio(info);
 	if (retval < 0) {
@@ -3564,22 +3563,6 @@ static int fts_probe(struct spi_device *client)
 			 __func__);
 		error = -EINVAL;
 		goto ProbeErrorExit_2;
-	}
-
-	error = fts_pinctrl_init(info);
-
-	if (!error && info->ts_pinctrl) {
-		error =
-		    pinctrl_select_state(info->ts_pinctrl,
-					 info->pinctrl_state_active);
-
-		if (error < 0) {
-			dev_err(&client->dev,
-				"%s: Failed to select %s pinstate %d\n",
-				__func__, PINCTRL_STATE_ACTIVE, error);
-		}
-	} else {
-		dev_err(&client->dev, "%s: Failed to init pinctrl\n", __func__);
 	}
 
 	info->client->irq = gpio_to_irq(info->board->irq_gpio);

@@ -49,9 +49,7 @@
 #define FTS_TS_DRV_VERSION                  "5.2.4"			/*driver version string format*/
 #define FTS_TS_DRV_VER						0x05020400		/*driver version u32 format*/
 
-#define PINCTRL_STATE_ACTIVE		"pmx_ts_active"
-#define PINCTRL_STATE_SUSPEND		"pmx_ts_suspend"
-#define PINCTRL_STATE_RELEASE		"pmx_ts_release"
+#define PINCTRL_STATE_INT		"tp_int"
 
 
 #define DRIVER_TEST
@@ -165,6 +163,8 @@ struct fts_hw_platform_data {
 	size_t nbuttons;
 	int *key_code;
 #endif
+	struct pinctrl *pctrl;
+	struct pinctrl_state *irq_pstate;
 };
 
 /*
@@ -240,9 +240,6 @@ struct fts_ts_info {
 
 	struct notifier_block notifier;
 	bool sensor_sleep;
-	struct pinctrl *ts_pinctrl;
-	struct pinctrl_state *pinctrl_state_active;
-	struct pinctrl_state *pinctrl_state_suspend;
 
 	/* input lock */
 	struct mutex input_report_mutex;
