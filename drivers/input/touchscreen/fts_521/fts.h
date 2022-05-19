@@ -155,33 +155,16 @@ do {\
 #define FTS_RESULT_PASS 2
 #define FTS_RESULT_FAIL 1
 
-struct fts_config_info {
-	u8 tp_vendor;
-	u8 tp_color;
-	u8 tp_hw_version;
-	const char *fts_cfg_name;
-	const char *fts_limit_name;
-};
-
 struct fts_hw_platform_data {
 	int (*power) (bool on);
 	int irq_gpio;
 	int reset_gpio;
-	unsigned long irq_flags;
-	unsigned int x_max;
-	unsigned int y_max;
 	const char *vdd_reg_name;
 	const char *avdd_reg_name;
-	const char *default_fw_name;
-	size_t config_array_size;
-	struct fts_config_info *config_array;
-	int current_index;
 #ifdef PHONE_KEY
 	size_t nbuttons;
 	int *key_code;
 #endif
-	unsigned long keystates;
-	bool check_display_name;
 };
 
 /*
@@ -233,9 +216,7 @@ struct fts_ts_info {
 	struct work_struct work;
 	struct work_struct suspend_work;
 	struct work_struct resume_work;
-	struct work_struct cmd_update_work;
 	struct workqueue_struct *event_wq;
-	struct workqueue_struct *touch_feature_wq;
 
 #ifndef FW_UPDATE_ON_PROBE
 	struct delayed_work fwu_work;
@@ -258,49 +239,23 @@ struct fts_ts_info {
 	int fwupdate_stat;
 
 	struct notifier_block notifier;
-	struct notifier_block bl_notifier;
 	bool sensor_sleep;
 	struct pinctrl *ts_pinctrl;
 	struct pinctrl_state *pinctrl_state_active;
 	struct pinctrl_state *pinctrl_state_suspend;
-	u8 lockdown_info[FTS_LOCKDOWN_SIZE];
-	int result_type;
-	struct proc_dir_entry *tp_selftest_proc;
-	struct proc_dir_entry *tp_data_dump_proc;
-	struct proc_dir_entry *tp_fw_version_proc;
-	struct proc_dir_entry *tp_lockdown_info_proc;
 
 	/* input lock */
 	struct mutex input_report_mutex;
-	struct mutex cmd_update_mutex;
 	int gesture_enabled;
 	int glove_enabled;
 	int charger_enabled;
 	int stylus_enabled;
 	int cover_enabled;
 	unsigned int grip_enabled;
-	unsigned int grip_pixel;
-	unsigned int doze_time;
-	unsigned int grip_pixel_def;
-	unsigned int doze_time_def;
 #ifdef CONFIG_TOUCHSCREEN_ST_DEBUG_FS
 	struct dentry *debugfs;
 #endif
-	struct class *fts_tp_class;
-	struct device *fts_touch_dev;
-	bool lockdown_is_ok;
-	struct completion tp_reset_completion;
-	atomic_t system_is_resetting;
 	unsigned int fod_status;
-	bool irq_status;
-	bool dev_pm_suspend;
-	struct completion dev_pm_suspend_completion;
-};
-
-struct fts_mode_switch {
-	struct fts_ts_info *info;
-	unsigned char mode;
-	struct work_struct switch_mode_work;
 };
 
 int fts_chip_powercycle(struct fts_ts_info *info);

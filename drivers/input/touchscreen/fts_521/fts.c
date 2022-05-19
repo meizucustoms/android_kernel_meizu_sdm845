@@ -144,8 +144,6 @@ struct fts_ts_info *fts_info;
 static int fts_init_sensing(struct fts_ts_info *info);
 static int fts_mode_handler(struct fts_ts_info *info, int force);
 static int fts_chip_initialization(struct fts_ts_info *info, int init_type);
-static const char *fts_get_limit(struct fts_ts_info *info);
-extern const char *dsi_get_display_name(void);
 
 static irqreturn_t fts_event_handler(int irq, void *ts_info);
 bool wait_queue_complete;
@@ -293,7 +291,7 @@ static ssize_t fts_fw_test_show(struct device *dev,
 	struct fts_ts_info *info = dev_get_drvdata(dev);
 
 	fw.data = NULL;
-	ret = readFwFile(info->board->default_fw_name, &fw, 0);
+	ret = readFwFile("NULL", &fw, 0);
 
 	if (ret < OK) {
 		logError(1, "%s Error during reading FW file! ERROR %08X\n",
@@ -1248,10 +1246,8 @@ static ssize_t stm_fts_cmd_show(struct device *dev,
 				break;
 			}
 
-			limit_file_name = fts_get_limit(info);
 			res =
-			    production_test_main(LIMITS_FILE, 1, init_type,
-						 &tests);
+			    production_test_main(LIMITS_FILE, 1, init_type, &tests);
 			break;
 			/*read mutual raw */
 		case 0x13:
@@ -1600,718 +1596,12 @@ END:
 	return count;
 }
 
-static ssize_t fts_panel_color_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-	return snprintf(buf, PAGE_SIZE, "%c\n", info->lockdown_info[2]);
-}
-
-static ssize_t fts_panel_vendor_show(struct device *dev,
-				     struct device_attribute *attr, char *buf)
-{
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-	return snprintf(buf, PAGE_SIZE, "%c\n", info->lockdown_info[6]);
-}
-
-static ssize_t fts_lockdown_info_show(struct device *dev,
-				      struct device_attribute *attr, char *buf)
-{
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-	int ret;
-	ret = fts_get_lockdown_info(info->lockdown_info, info);
-
-	if (ret != OK) {
-		logError(1, "%s get lockdown info error\n", tag);
-		return 0;
-	}
-
-	return snprintf(buf, PAGE_SIZE,
-			"0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x\n",
-			info->lockdown_info[0], info->lockdown_info[1],
-			info->lockdown_info[2], info->lockdown_info[3],
-			info->lockdown_info[4], info->lockdown_info[5],
-			info->lockdown_info[6], info->lockdown_info[7]);
-}
-
-static ssize_t fts_lockdown_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t count)
-{
-	int n, i, ret;
-	char *p = (char *)buf;
-	u8 *typecomand = NULL;
-
-	memset(typeOfComand, 0, CMD_STR_LEN * sizeof(u32));
-	logError(1, "%s \n", tag);
-	for (n = 0; n < (count + 1) / 3; n++) {
-		sscanf(p, "%02X ", &typeOfComand[n]);
-		p += 3;
-		logError(1, "%s command_sequence[%d] = %02X\n", tag, n,
-			 typeOfComand[n]);
-	}
-	numberParameters = n;
-	if (numberParameters < 3)
-		goto END;
-	logError(1, "%s %d = %d \n", tag, n, numberParameters);
-
-	typecomand =
-	    (u8 *) kmalloc((numberParameters - 2) * sizeof(u8), GFP_KERNEL);
-	if (typecomand != NULL) {
-		for (i = 0; i < numberParameters - 2; i++) {
-			typecomand[i] = (u8) typeOfComand[i + 2];
-			logError(1, "%s typecomand[%d] = %X \n", tag, i,
-				 typecomand[i]);
-		}
-	} else {
-		goto END;
-	}
-
-	ret =
-	    writeLockDownInfo(typecomand, numberParameters - 2,
-			      typeOfComand[0]);
-	if (ret < 0) {
-		logError(1, "%s fts_lockdown_store failed\n", tag);
-	}
-	kfree(typecomand);
-END:
-	logError(1, "%s Number of Parameters = %d \n", tag, numberParameters);
-
-	return count;
-}
-
-static ssize_t fts_lockdown_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	int i, ret;
-	int size = 0, count = 0;
-	u8 type;
-	u8 *temp_buffer = NULL;
-
-	temp_buffer = (u8 *) kmalloc(LOCKDOWN_LENGTH * sizeof(u8), GFP_KERNEL);
-	if (temp_buffer == NULL || numberParameters < 2) {
-		count +=
-		    snprintf(&buf[count], PAGE_SIZE, "prepare read lockdown failded\n");
-		return count;
-	}
-	type = typeOfComand[0];
-	size = (int)(typeOfComand[1]);
-	count += snprintf(&buf[count], PAGE_SIZE, "read lock down code:\n");
-	ret = readLockDownInfo(temp_buffer, type, size);
-	if (ret < OK) {
-		count += snprintf(&buf[count], PAGE_SIZE, "read lockdown failded\n");
-		goto END;
-	}
-	for (i = 0; i < size; i++) {
-		count += snprintf(&buf[count], PAGE_SIZE, "%02X ", temp_buffer[i]);
-	}
-	count += snprintf(&buf[count], PAGE_SIZE, "\n");
-
-END:
-	numberParameters = 0;
-	kfree(temp_buffer);
-	return count;
-}
-
-static ssize_t fts_selftest_info_show(struct device *dev,
-				      struct device_attribute *attr, char *buf)
-{
-	int res = 0, i = 0, count = 0, force_node = 0, sense_node = 0, pos =
-	    0, last_pos = 0;
-	MutualSenseFrame frameMS;
-	char buff[80];
-	struct i2c_client *client = to_i2c_client(dev);
-	struct fts_ts_info *info = i2c_get_clientdata(client);
-
-	res = fts_disableInterrupt();
-	if (res < OK)
-		goto END;
-
-	setScanMode(SCAN_MODE_ACTIVE, 0x01);
-	mdelay(WAIT_FOR_FRESH_FRAMES);
-	setScanMode(SCAN_MODE_ACTIVE, 0x00);
-	mdelay(WAIT_AFTER_SENSEOFF);
-	flushFIFO();
-	res = getMSFrame3(MS_RAW, &frameMS);
-	if (res < 0) {
-		logError(0,
-			 "%s Error while taking the MS frame... ERROR %08X \n",
-			 tag, res);
-		goto END;
-	}
-	fts_mode_handler(info, 1);
-
-	sense_node = frameMS.header.sense_node;
-	force_node = frameMS.header.force_node;
-
-	for (i = 0; i < RELEASE_INFO_SIZE; i++) {
-		if (i == 0) {
-			pos +=
-			    snprintf(buff + last_pos, PAGE_SIZE, "0x%02x",
-				     systemInfo.u8_releaseInfo[i]);
-			last_pos = pos;
-		} else {
-			pos +=
-			    snprintf(buff + last_pos, PAGE_SIZE, "%02x",
-				     systemInfo.u8_releaseInfo[i]);
-			last_pos = pos;
-		}
-	}
-	count =
-	    snprintf(buf, PAGE_SIZE,
-		     "Device address:,0x49\nChip Id:,0x%04x\nFw version:,0x%04x\nConfig version:,0x%04x\nChip serial number:,%s\nForce lines count:,%02d\nSense lines count:,%02d\n\n",
-		     systemInfo.u16_chip0Id, systemInfo.u16_fwVer,
-		     systemInfo.u16_cfgVer, buff, force_node, sense_node);
-END:
-	fts_enableInterrupt();
-	return count;
-
-}
-
-static ssize_t fts_ms_raw_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	int res = 0, count = 0, j = 0, sense_node = 0, force_node = 0, pos =
-	    0, last_pos = 0;
-	char *all_strbuff = NULL;
-	struct i2c_client *client = to_i2c_client(dev);
-	struct fts_ts_info *info = i2c_get_clientdata(client);
-	MutualSenseFrame frameMS;
-
-	res = fts_disableInterrupt();
-	if (res < OK)
-		goto END;
-	all_strbuff = vmalloc(PAGE_SIZE);
-	if (!all_strbuff) {
-		logError(1, "%s %s alloc all_strbuff fail\n", tag, __func__);
-		goto END;
-	} else
-		memset(all_strbuff, 0, PAGE_SIZE);
-
-	setScanMode(SCAN_MODE_ACTIVE, 0x01);
-	mdelay(WAIT_FOR_FRESH_FRAMES);
-	setScanMode(SCAN_MODE_ACTIVE, 0x00);
-	mdelay(WAIT_AFTER_SENSEOFF);
-	flushFIFO();
-	res = getMSFrame3(MS_RAW, &frameMS);
-
-	fts_mode_handler(info, 1);
-	sense_node = frameMS.header.sense_node;
-	force_node = frameMS.header.force_node;
-	pos +=
-	    snprintf(all_strbuff + last_pos, PAGE_SIZE,
-		     "MsTouchRaw,%2d,%2d\n ,", force_node, sense_node);
-	last_pos = pos;
-	if (res >= OK) {
-		for (j = 0; j < sense_node; j++)
-			if ((j + 1) % sense_node) {
-				pos +=
-				    snprintf(all_strbuff + last_pos, PAGE_SIZE,
-					     "C%02d,", j);
-				last_pos = pos;
-			} else {
-				pos +=
-				    snprintf(all_strbuff + last_pos, PAGE_SIZE,
-					     "C%02d\nR00,", j);
-				last_pos = pos;
-			}
-		for (j = 0; j < sense_node * force_node; j++) {
-			if ((j + 1) % sense_node) {
-				pos +=
-				    snprintf(all_strbuff + last_pos, PAGE_SIZE,
-					     "%4d,", frameMS.node_data[j]);
-				last_pos = pos;
-			} else {
-				if ((j + 1) / sense_node != force_node)
-					pos +=
-					    snprintf(all_strbuff + last_pos,
-						     PAGE_SIZE, "%4d\nR%02d,",
-						     frameMS.node_data[j],
-						     (j + 1) / sense_node);
-				else
-					pos +=
-					    snprintf(all_strbuff + last_pos,
-						     PAGE_SIZE, "%4d\n",
-						     frameMS.node_data[j]);
-				last_pos = pos;
-			}
-		}
-		if (frameMS.node_data) {
-			kfree(frameMS.node_data);
-			frameMS.node_data = NULL;
-		}
-	}
-
-	count = snprintf(buf, PAGE_SIZE, "%s\n", all_strbuff);
-	vfree(all_strbuff);
-END:
-	fts_enableInterrupt();
-	return count;
-}
-
-static ssize_t fts_ms_cx_total_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	int res = 0, pos = 0, last_pos = 0, count = 0, j = 0, sense_node =
-	    0, force_node = 0;
-	char *all_strbuff = NULL;
-	TotMutualSenseData totCompData;
-
-	res = fts_disableInterrupt();
-	if (res < OK)
-		goto END;
-	all_strbuff = vmalloc(PAGE_SIZE);
-	if (!all_strbuff) {
-		logError(1, "%s %s alloc all_strbuff fail\n", tag, __func__);
-		goto END;
-	} else
-		memset(all_strbuff, 0, PAGE_SIZE);
-
-	res =
-	    readTotMutualSenseCompensationData(LOAD_PANEL_CX_TOT_MS_TOUCH,
-					       &totCompData);
-	if (res >= OK) {
-		sense_node = totCompData.header.sense_node;
-		force_node = totCompData.header.force_node;
-		pos +=
-		    snprintf(all_strbuff + last_pos, PAGE_SIZE,
-			     "MsTouchTotalCx,%2d,%2d\n ,", force_node,
-			     sense_node);
-		last_pos = pos;
-		for (j = 0; j < sense_node; j++)
-			if ((j + 1) % sense_node) {
-				pos +=
-				    snprintf(all_strbuff + last_pos, PAGE_SIZE,
-					     "C%02d,", j);
-				last_pos = pos;
-			} else {
-				pos +=
-				    snprintf(all_strbuff + last_pos, PAGE_SIZE,
-					     "C%02d\nR00,", j);
-				last_pos = pos;
-			}
-		for (j = 0; j < sense_node * force_node; j++) {
-			if ((j + 1) % sense_node) {
-				pos +=
-				    snprintf(all_strbuff + last_pos, PAGE_SIZE,
-					     "%4d,", totCompData.node_data[j]);
-				last_pos = pos;
-			} else {
-				if ((j + 1) / sense_node != force_node)
-					pos +=
-					    snprintf(all_strbuff + last_pos,
-						     PAGE_SIZE, "%4d\nR%02d,",
-						     totCompData.node_data[j],
-						     (j + 1) / sense_node);
-				else
-					pos +=
-					    snprintf(all_strbuff + last_pos,
-						     PAGE_SIZE, "%4d\n",
-						     totCompData.node_data[j]);
-				last_pos = pos;
-			}
-		}
-		if (totCompData.node_data) {
-			kfree(totCompData.node_data);
-			totCompData.node_data = NULL;
-		}
-	}
-
-	count = snprintf(buf, PAGE_SIZE, "%s\n", all_strbuff);
-	vfree(all_strbuff);
-END:
-	fts_enableInterrupt();
-	return count;
-
-}
-
-static ssize_t fts_ss_ix_total_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	int ret = 0, pos = 0, last_pos = 0, count = 0, j = 0, sense_node =
-	    0, force_node = 0;
-	char *all_strbuff = NULL;
-	TotSelfSenseData totCompData;
-
-	ret = fts_disableInterrupt();
-	if (ret < OK)
-		goto END;
-	all_strbuff = vmalloc(PAGE_SIZE);
-	if (!all_strbuff) {
-		logError(1, "%s %s alloc all_strbuff fail\n", tag, __func__);
-		goto END;
-	} else {
-		memset(all_strbuff, 0, PAGE_SIZE);
-	}
-	ret =
-	    readTotSelfSenseCompensationData(LOAD_PANEL_CX_TOT_SS_TOUCH,
-					     &totCompData);
-	if (ret < 0) {
-		logError(1,
-			 "%s production_test_data: readTotSelfSenseCompensationData failed... ERROR %08X \n",
-			 tag, ERROR_PROD_TEST_DATA);
-		goto END;
-	}
-
-	sense_node = 1;
-	force_node = totCompData.header.force_node;
-
-	pos +=
-	    snprintf(all_strbuff + last_pos, PAGE_SIZE,
-		     "SsTouchForceTotalIx,%2d,1\n ,C00\n", force_node);
-	last_pos = pos;
-	for (j = 0; j < force_node; j++) {
-		pos +=
-		    snprintf(all_strbuff + last_pos, PAGE_SIZE, "R%02d,%4d\n",
-			     j, totCompData.ix_fm[j]);
-		last_pos = pos;
-	}
-
-	pos +=
-	    snprintf(all_strbuff + last_pos, PAGE_SIZE,
-		     "SsTouchForceTotalCx,%2d,1\n ,C00\n", force_node);
-	last_pos = pos;
-	for (j = 0; j < force_node; j++) {
-		pos +=
-		    snprintf(all_strbuff + last_pos, PAGE_SIZE, "R%02d,%4d\n",
-			     j, totCompData.cx_fm[j]);
-		last_pos = pos;
-	}
-
-	sense_node = totCompData.header.sense_node;
-	force_node = 1;
-
-	pos +=
-	    snprintf(all_strbuff + last_pos, PAGE_SIZE,
-		     "SsTouchsenseTotalIx,%2d,1\n ,C00\n", sense_node);
-	last_pos = pos;
-	for (j = 0; j < sense_node; j++) {
-		pos +=
-		    snprintf(all_strbuff + last_pos, PAGE_SIZE, "R%02d,%4d\n",
-			     j, totCompData.ix_sn[j]);
-		last_pos = pos;
-	}
-
-	pos +=
-	    snprintf(all_strbuff + last_pos, PAGE_SIZE,
-		     "SsTouchsenseTotalCx,%2d,1\n ,C00\n", sense_node);
-	last_pos = pos;
-	for (j = 0; j < sense_node; j++) {
-		pos +=
-		    snprintf(all_strbuff + last_pos, PAGE_SIZE, "R%02d,%4d\n",
-			     j, totCompData.cx_sn[j]);
-		last_pos = pos;
-	}
-
-	if (totCompData.ix_fm != NULL) {
-		kfree(totCompData.ix_fm);
-		totCompData.ix_fm = NULL;
-	}
-
-	if (totCompData.cx_fm != NULL) {
-		kfree(totCompData.cx_fm);
-		totCompData.cx_fm = NULL;
-	}
-
-	if (totCompData.ix_sn != NULL) {
-		kfree(totCompData.ix_sn);
-		totCompData.ix_sn = NULL;
-	}
-
-	if (totCompData.cx_sn != NULL) {
-		kfree(totCompData.cx_sn);
-		totCompData.cx_sn = NULL;
-	}
-
-	count = snprintf(buf, PAGE_SIZE, "%s\n", all_strbuff);
-	vfree(all_strbuff);
-END:
-	fts_enableInterrupt();
-	return count;
-}
-
-static ssize_t fts_ss_raw_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	int res = 0, count = 0, j = 0, sense_node = 0, force_node = 0, pos =
-	    0, last_pos = 0;
-	char *all_strbuff = NULL;
-	struct i2c_client *client = to_i2c_client(dev);
-	struct fts_ts_info *info = i2c_get_clientdata(client);
-	SelfSenseFrame frameSS;
-
-	res = fts_disableInterrupt();
-	if (res < OK)
-		goto END;
-	all_strbuff = vmalloc(PAGE_SIZE * 4);
-	if (!all_strbuff) {
-		logError(1, "%s %s alloc all_strbuff fail\n", tag, __func__);
-		goto END;
-	} else
-		memset(all_strbuff, 0, PAGE_SIZE);
-	setScanMode(SCAN_MODE_ACTIVE, 0x01);
-	mdelay(WAIT_FOR_FRESH_FRAMES);
-	setScanMode(SCAN_MODE_ACTIVE, 0x00);
-	mdelay(WAIT_AFTER_SENSEOFF);
-	flushFIFO();
-	res = getSSFrame3(SS_RAW, &frameSS);
-
-	fts_mode_handler(info, 1);
-	sense_node = frameSS.header.sense_node;
-	force_node = frameSS.header.force_node;
-	pos +=
-	    snprintf(all_strbuff + last_pos, PAGE_SIZE, "SsTouchRaw,%2d,%2d\n",
-		     force_node, sense_node);
-	last_pos = pos;
-	if (res >= OK) {
-		pos +=
-		    snprintf(all_strbuff + last_pos, PAGE_SIZE,
-			     "SS force frame\n ,");
-		last_pos = pos;
-
-		for (j = 0; j < frameSS.header.force_node - 1; j++) {
-			pos +=
-			    snprintf(all_strbuff + last_pos, PAGE_SIZE, "%04d,",
-				     frameSS.force_data[j]);
-			last_pos = pos;
-		}
-
-		if (j == frameSS.header.force_node - 1) {
-			pos +=
-			    snprintf(all_strbuff + last_pos, PAGE_SIZE,
-				     "%04d\n", frameSS.force_data[j]);
-			last_pos = pos;
-		}
-
-		pos +=
-		    snprintf(all_strbuff + last_pos, PAGE_SIZE,
-			     "SS sense frame\n ,");
-		last_pos = pos;
-
-		for (j = 0; j < frameSS.header.sense_node - 1; j++) {
-			pos +=
-			    snprintf(all_strbuff + last_pos, PAGE_SIZE, "%04d,",
-				     frameSS.sense_data[j]);
-			last_pos = pos;
-		}
-
-		if (j == frameSS.header.sense_node - 1) {
-			pos +=
-			    snprintf(all_strbuff + last_pos, PAGE_SIZE,
-				     "%04d\n", frameSS.sense_data[j]);
-			last_pos = pos;
-		}
-
-		if (frameSS.force_data) {
-			kfree(frameSS.force_data);
-			frameSS.force_data = NULL;
-		}
-		if (frameSS.sense_data) {
-			kfree(frameSS.sense_data);
-			frameSS.sense_data = NULL;
-		}
-
-	}
-
-	count = snprintf(buf, PAGE_SIZE, "%s\n", all_strbuff);
-	vfree(all_strbuff);
-END:
-	fts_enableInterrupt();
-	return count;
-}
-
-static ssize_t fts_strength_frame_show(struct device *dev,
-				       struct device_attribute *attr, char *buf)
-{
-	MutualSenseFrame frame;
-	int res = 0, count = 0, j = 0, size = 0;
-	char *all_strbuff = NULL;
-	char buff[CMD_STR_LEN] = { 0 };
-	struct i2c_client *client = to_i2c_client(dev);
-	struct fts_ts_info *info = i2c_get_clientdata(client);
-	frame.node_data = NULL;
-
-	res = fts_disableInterrupt();
-	if (res < OK)
-		goto END;
-
-	res = getMSFrame3(MS_STRENGTH, &frame);
-
-	if (res < OK) {
-		logError(1, "%s %s: could not get the frame! ERROR %08X \n",
-			 tag, __func__, res);
-		goto END;
-	}
-	size = (res * 5) + 11;
-
-	/*
-	   flushFIFO();
-	 */
-	fts_mode_handler(info, 1);
-	all_strbuff = (char *)kmalloc(PAGE_SIZE * sizeof(char), GFP_KERNEL);
-
-	if (all_strbuff != NULL) {
-		memset(all_strbuff, 0, size);
-		snprintf(all_strbuff, size, "ms_differ\n");
-		if (res >= OK) {
-			for (j = 0; j < frame.node_data_size; j++) {
-				if ((j + 1) % frame.header.sense_node)
-					snprintf(buff, sizeof(buff), "%4d,",
-						 frame.node_data[j]);
-				else
-					snprintf(buff, sizeof(buff), "%4d\n",
-						 frame.node_data[j]);
-
-				strlcat(all_strbuff, buff, size);
-			}
-
-			kfree(frame.node_data);
-			frame.node_data = NULL;
-		}
-
-		count = snprintf(buf, PAGE_SIZE, "%s\n", all_strbuff);
-		kfree(all_strbuff);
-	} else {
-		logError(1,
-			 "%s %s: Unable to allocate all_strbuff! ERROR %08X\n",
-			 tag, __func__, ERROR_ALLOC);
-	}
-
-END:
-	fts_enableInterrupt();
-
-	return count;
-}
-
-static ssize_t fts_doze_time_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-
-	return snprintf(buf, TSP_BUF_SIZE, "%u\n", info->doze_time);
-}
-
-static ssize_t fts_doze_time_store(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	u8 cmd[4] = {FTS_CMD_CUSTOM, 0x00, 0x00, 0x00};
-	int ret = 0;
-	u16 reg_val = 0;
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-
-	pr_info("%s,buf:%s,count:%zu\n", __func__, buf, count);
-	sscanf(buf, "%u", &info->doze_time);
-	/*reg value * 10 represents of the num of frames ,one frame is about 8ms, the input value is ms*/
-	reg_val = (info->doze_time / 8 - 1) / 10;
-	cmd[3] = reg_val;
-	ret = fts_write_dma_safe(cmd, ARRAY_SIZE(cmd));
-	if (ret < OK) {
-		logError(1, "%s %s: write failed...ERROR %08X !\n", tag,
-			 __func__, ret);
-		return -EPERM;
-	}
-	return count;
-}
-
-static ssize_t fts_grip_enable_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-
-	return snprintf(buf, TSP_BUF_SIZE, "%d\n", info->grip_enabled);
-}
-
-static ssize_t fts_grip_enable_store(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	u8 cmd[3] = {FTS_CMD_FEATURE, 0x04, 0x01};
-	int ret = 0;
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-
-	pr_info("%s,buf:%s,count:%zu\n", __func__, buf, count);
-	sscanf(buf, "%u", &info->grip_enabled);
-	cmd[2] = info->grip_enabled;
-	ret = fts_write_dma_safe(cmd, ARRAY_SIZE(cmd));
-	if (ret < OK) {
-		logError(1, "%s %s: write failed...ERROR %08X !\n", tag,
-			 __func__, ret);
-		return -EPERM;
-	}
-	return count;
-}
-
-static ssize_t fts_grip_area_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-
-	return snprintf(buf, TSP_BUF_SIZE, "%d\n", info->grip_pixel);
-}
-
-static ssize_t fts_grip_area_store(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	u8 cmd[4] = {FTS_CMD_CUSTOM, 0x01, 0x01, 0x00};
-	int ret = 0;
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-	logError(1, " %s %s,buf:%s,count:%zu\n", tag, __func__, buf, count);
-	sscanf(buf, "%u", &info->grip_pixel);
-	cmd[3] = info->grip_pixel;
-	if (atomic_read(&info->system_is_resetting)) {
-		logError(1, "%s %s system is resetting ,wait reset done\n", tag, __func__);
-		ret = wait_for_completion_timeout(&info->tp_reset_completion, msecs_to_jiffies(40));
-		if (!ret) {
-			logError(1, "%s %s wait tp reset timeout, wrtie grip area error\n", tag, __func__);
-			return count;
-		}
-	}
-	ret = fts_write_dma_safe(cmd, ARRAY_SIZE(cmd));
-	if (ret < OK) {
-		logError(1, "%s %s: write failed...ERROR %08X !\n", tag,
-			 __func__, ret);
-		return -EPERM;
-	}
-	return count;
-}
-
-static ssize_t fts_fod_status_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-
-	return snprintf(buf, TSP_BUF_SIZE, "%d\n", info->fod_status);
-}
-
-static ssize_t fts_fod_status_store(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-
-	logError(1, " %s %s,buf:%s,count:%zu\n", tag, __func__, buf, count);
-	sscanf(buf, "%u", &info->fod_status);
-	return count;
-}
-
-static DEVICE_ATTR(fts_lockdown, (S_IRUGO | S_IWUSR | S_IWGRP),
-		   fts_lockdown_show, fts_lockdown_store);
 static DEVICE_ATTR(fwupdate, (S_IRUGO | S_IWUSR | S_IWGRP), fts_fwupdate_show,
 		   fts_fwupdate_store);
-static DEVICE_ATTR(panel_vendor, (S_IRUGO), fts_panel_vendor_show, NULL);
-static DEVICE_ATTR(panel_color, (S_IRUGO), fts_panel_color_show, NULL);
 static DEVICE_ATTR(ms_strength, (S_IRUGO), fts_strength_frame_show, NULL);
-static DEVICE_ATTR(lockdown_info, (S_IRUGO), fts_lockdown_info_show, NULL);
 static DEVICE_ATTR(appid, (S_IRUGO), fts_appid_show, NULL);
 static DEVICE_ATTR(mode_active, (S_IRUGO), fts_mode_active_show, NULL);
 static DEVICE_ATTR(fw_file_test, (S_IRUGO), fts_fw_test_show, NULL);
-static DEVICE_ATTR(selftest_info, (S_IRUGO), fts_selftest_info_show, NULL);
-static DEVICE_ATTR(ms_raw, (S_IRUGO), fts_ms_raw_show, NULL);
-static DEVICE_ATTR(ss_raw, (S_IRUGO), fts_ss_raw_show, NULL);
-static DEVICE_ATTR(ms_cx_total, (S_IRUGO), fts_ms_cx_total_show, NULL);
-static DEVICE_ATTR(ss_ix_total, (S_IRUGO), fts_ss_ix_total_show, NULL);
 
 static DEVICE_ATTR(stm_fts_cmd, (S_IRUGO | S_IWUSR | S_IWGRP), stm_fts_cmd_show,
 		   stm_fts_cmd_store);
@@ -2353,12 +1643,6 @@ static DEVICE_ATTR(gesture_mask, (S_IRUGO | S_IWUSR | S_IWGRP),
 static DEVICE_ATTR(gesture_coordinates, (S_IRUGO | S_IWUSR | S_IWGRP),
 		   fts_gesture_coordinates_show, NULL);
 #endif
-static DEVICE_ATTR(doze_time, (S_IRUGO | S_IWUSR | S_IWGRP),
-		   fts_doze_time_show, fts_doze_time_store);
-static DEVICE_ATTR(grip_enable, (S_IRUGO | S_IWUSR | S_IWGRP),
-		   fts_grip_enable_show, fts_grip_enable_store);
-static DEVICE_ATTR(grip_area, (S_IRUGO | S_IWUSR | S_IWGRP),
-		   fts_grip_area_show, fts_grip_area_store);
 
 static struct attribute *fts_attr_group[] = {
 	&dev_attr_fwupdate.attr,
@@ -2386,28 +1670,12 @@ static struct attribute *fts_attr_group[] = {
 	&dev_attr_stylus_mode.attr,
 #endif
 #endif
-	&dev_attr_fts_lockdown.attr,
-	&dev_attr_panel_vendor.attr,
-	&dev_attr_panel_color.attr,
-	&dev_attr_lockdown_info.attr,
 #ifdef GESTURE_MODE
 	&dev_attr_gesture_mask.attr,
 	&dev_attr_gesture_coordinates.attr,
 #endif
-	&dev_attr_selftest_info.attr,
-	&dev_attr_ms_raw.attr,
-	&dev_attr_ss_raw.attr,
-	&dev_attr_ms_cx_total.attr,
-	&dev_attr_ss_ix_total.attr,
-	&dev_attr_ms_strength.attr,
-	&dev_attr_doze_time.attr,
-	&dev_attr_grip_enable.attr,
-	&dev_attr_grip_area.attr,
 	NULL,
 };
-
-static DEVICE_ATTR(fod_status, (S_IRUGO | S_IWUSR | S_IWGRP),
-		   fts_fod_status_show, fts_fod_status_store);
 
 /**@}*/
 /**@}*/
@@ -3084,15 +2352,6 @@ static irqreturn_t fts_event_handler(int irq, void *ts_info)
 	event_dispatch_handler_t event_handler;
 
 	lpm_disable_for_input(true);
-	if (info->dev_pm_suspend) {
-		error = wait_for_completion_timeout(&info->dev_pm_suspend_completion, msecs_to_jiffies(700));
-		if (!error) {
-			logError(1, "%s system(i2c) can't finished resuming procedure, skip it", tag);
-			lpm_disable_for_input(false);
-			return IRQ_HANDLED;
-			}
-	}
-	info->irq_status = true;
 	error = fts_writeReadU8UX(regAdd, 0, 0, data, FIFO_EVENT_SIZE,
 				  DUMMY_FIFO);
 	events_remaining = data[EVENTS_REMAINING_POS] & EVENTS_REMAINING_MASK;
@@ -3124,75 +2383,9 @@ static irqreturn_t fts_event_handler(int irq, void *ts_info)
 		}
 	}
 	input_sync(info->input_dev);
-	info->irq_status = false;
 	if (!info->touch_id)
 		lpm_disable_for_input(false);
 	return IRQ_HANDLED;
-}
-
-/**@}*/
-
-static const char *fts_get_config(struct fts_ts_info *info)
-{
-	struct fts_hw_platform_data *pdata = info->board;
-	int i = 0, ret = 0;
-
-	ret = fts_get_lockdown_info(info->lockdown_info, info);
-
-	if (ret < OK) {
-		logError(1, "%s can't read lockdown info", tag);
-		return pdata->default_fw_name;
-	}
-
-	ret |= fts_enableInterrupt();
-
-	for (i = 0; i < pdata->config_array_size; i++) {
-		if (info->lockdown_info[0] ==
-		     pdata->config_array[i].tp_vendor)
-			break;
-	}
-
-	if (i >= pdata->config_array_size) {
-		logError(1, "%s can't find right config", tag);
-		return pdata->default_fw_name;
-	}
-
-	logError(1, "%s Choose config %d: %s", tag, i,
-		 pdata->config_array[i].fts_cfg_name);
-	pdata->current_index = i;
-
-	return pdata->config_array[i].fts_cfg_name;
-}
-
-static const char *fts_get_limit(struct fts_ts_info *info)
-{
-	struct fts_hw_platform_data *pdata = info->board;
-	int i = 0, ret = 0;
-
-	ret = fts_get_lockdown_info(info->lockdown_info, info);
-
-	if (ret < OK) {
-		logError(1, "%s can't read lockdown info", tag);
-		return LIMITS_FILE;
-	}
-
-	ret |= fts_enableInterrupt();
-
-	for (i = 0; i < pdata->config_array_size; i++) {
-		if (info->lockdown_info[0] ==
-		     pdata->config_array[i].tp_vendor)
-			break;
-	}
-
-	if (i >= pdata->config_array_size) {
-		logError(1, "%s can't find right limit", tag);
-		return LIMITS_FILE;
-	}
-
-	logError(1, "%s Choose limit file %d: %s", tag, i,
-		 pdata->config_array[i].fts_limit_name);
-	pdata->current_index = i;
-	return pdata->config_array[i].fts_limit_name;
 }
 
 /**
@@ -3200,7 +2393,7 @@ static const char *fts_get_limit(struct fts_ts_info *info)
 *	The function perform a fw update of the IC in case of crc error or a new fw version and then understand if the IC need to be re-initialized again.
 *	@return  OK if success or an error code which specify the type of error encountered
 */
-int fts_fw_update(struct fts_ts_info *info, const char *fw_name, int force)
+int fts_fw_update(struct fts_ts_info *info)
 {
 
 	u8 error_to_search[4] = {EVT_TYPE_ERROR_CRC_CX_HEAD, EVT_TYPE_ERROR_CRC_CX,
@@ -3231,30 +2424,19 @@ int fts_fw_update(struct fts_ts_info *info, const char *fw_name, int force)
 			 tag, __func__);
 	}
 
-	if (fw_name == NULL) {
-		fw_name = fts_get_config(info);
-		if (fw_name == NULL)
-			logError(1, "%s not found mached config!", tag);
-	}
+	retval = flashProcedure("NULL", crc_status, keep_cx);
 
-	if (fw_name) {
-		if (force)
-			retval = flashProcedure(fw_name, 1, keep_cx);
-		else
-			retval = flashProcedure(fw_name, crc_status, keep_cx);
-
-		if ((retval & 0xFF000000) == ERROR_FLASH_PROCEDURE) {
+	if ((retval & 0xFF000000) == ERROR_FLASH_PROCEDURE) {
+		logError(1,
+				"%s %s: firmware update failed and retry! ERROR %08X\n",
+				tag, __func__, retval);
+		fts_chip_powercycle(info);
+		retval1 = flashProcedure("NULL", crc_status, keep_cx);
+		if ((retval1 & 0xFF000000) == ERROR_FLASH_PROCEDURE) {
 			logError(1,
-				 "%s %s: firmware update failed and retry! ERROR %08X\n",
-				 tag, __func__, retval);
-			fts_chip_powercycle(info);
-			retval1 = flashProcedure(info->board->default_fw_name, crc_status, keep_cx);
-			if ((retval1 & 0xFF000000) == ERROR_FLASH_PROCEDURE) {
-				logError(1,
-					 "%s %s: firmware update failed again!  ERROR %08X\n",
-					 tag, __func__, retval1);
-				logError(1, "%s Fw Auto Update Failed!\n", tag);
-			}
+					"%s %s: firmware update failed again!  ERROR %08X\n",
+					tag, __func__, retval1);
+			logError(1, "%s Fw Auto Update Failed!\n", tag);
 		}
 	}
 
@@ -3290,7 +2472,7 @@ int fts_fw_update(struct fts_ts_info *info, const char *fw_name, int force)
 			logError(1,
 				 "%s %s: Try to recovery with CX in fw file...\n",
 				 tag, __func__, ret);
-			flashProcedure(info->board->default_fw_name, CRC_CX, 0);
+			flashProcedure("NULL", CRC_CX, 0);
 			logError(1, "%s %s: Refresh panel init data... \n", tag,
 				 __func__, ret);
 		}
@@ -3354,7 +2536,7 @@ static void fts_fw_update_auto(struct work_struct *work)
 	    container_of(work, struct delayed_work, work);
 	struct fts_ts_info *info =
 	    container_of(fwu_work, struct fts_ts_info, fwu_work);
-	fts_fw_update(info, NULL, 0);
+	fts_fw_update(info);
 }
 #endif
 
@@ -3416,7 +2598,7 @@ static int fts_interrupt_install(struct fts_ts_info *info)
 	/* disable interrupts in any case */
 	error = fts_disableInterrupt();
 	logError(1, "%s Interrupt Mode\n", tag);
-	if (request_threaded_irq(info->client->irq, NULL, fts_event_handler, info->board->irq_flags,
+	if (request_threaded_irq(info->client->irq, NULL, fts_event_handler, 0,
 			 FTS_TS_DRV_NAME, info)) {
 		logError(1, "%s Request irq failed\n", tag);
 		kfree(info->event_dispatch_table);
@@ -3823,46 +3005,6 @@ static struct notifier_block fts_noti_block = {
 };
 #endif
 
-static int fts_bl_state_chg_callback(struct notifier_block *nb,
-				      unsigned long val, void *data)
-{
-	struct fts_ts_info *info = container_of(nb, struct fts_ts_info, bl_notifier);
-	unsigned int blank;
-	int ret;
-
-	if (val != BACKLIGHT_UPDATED)
-		return NOTIFY_OK;
-	if (data && info) {
-		blank = *(int *)(data);
-		logError(1, "%s %s: val:%lu,blank:%u\n", tag, __func__, val, blank);
-		flush_workqueue(info->event_wq);
-		if (blank == BACKLIGHT_OFF) {
-			if (info->sensor_sleep)
-				return NOTIFY_OK;
-			logError(1, "%s %s: BL_EVENT_BLANK\n", tag, __func__);
-			ret = fts_disableInterrupt();
-			if (ret < OK)
-				logError(1, "%s fts_disableInterrupt ERROR %08X\n", tag, ret | ERROR_ENABLE_INTER);
-			else
-				logError(1, "%s fts_disableInterrupt\n", tag, ret | ERROR_ENABLE_INTER);
-		} else if (blank == BACKLIGHT_ON) {
-			logError(1, "%s %s: BL_EVENT_UNBLANK\n", tag, __func__);
-			if (!info->sensor_sleep) {
-				ret = fts_enableInterrupt();
-				if (ret < OK)
-					logError(1, "%s fts_enableInterrupt ERROR %08X\n", tag, ret | ERROR_ENABLE_INTER);
-				else
-					logError(1, "%s fts_enableInterrupt\n", tag, ret | ERROR_ENABLE_INTER);
-			}
-		}
-	}
-	return NOTIFY_OK;
-}
-
-static struct notifier_block fts_bl_noti_block = {
-	.notifier_call = fts_bl_state_chg_callback,
-};
-
 /**
  * From the name of the power regulator get/put the actual regulator structs (copying their references into fts_ts_info variable)
  * @param info pointer to fts_ts_info which contains info about the device and its hw setup
@@ -4127,350 +3269,8 @@ static int parse_dt(struct device *dev, struct fts_hw_platform_data *bdata)
 		bdata->reset_gpio = GPIO_NOT_DEFINED;
 	}
 
-	retval = of_property_read_u32(np, "fts,irq-flags", &temp_val);
-	if (retval < 0)
-		return retval;
-	else
-		bdata->irq_flags = temp_val;
-	retval = of_property_read_u32(np, "fts,x-max", &temp_val);
-	if (retval < 0)
-		bdata->x_max = X_AXIS_MAX;
-	else
-		bdata->x_max = temp_val;
-
-	retval = of_property_read_u32(np, "fts,y-max", &temp_val);
-	if (retval < 0)
-		bdata->y_max = Y_AXIS_MAX;
-	else
-		bdata->y_max = temp_val;
-	retval = of_property_read_string(np, "fts,default-fw-name",
-					 &bdata->default_fw_name);
-
-	retval =
-	    of_property_read_u32(np, "fts,config-array-size",
-				 (u32 *)&bdata->config_array_size);
-
-	if (retval) {
-		logError(1, "%s Unable to get array size\n", tag);
-		return retval;
-	}
-
-	bdata->config_array = devm_kzalloc(dev, bdata->config_array_size *
-					   sizeof(struct fts_config_info),
-					   GFP_KERNEL);
-
-	if (!bdata->config_array) {
-		logError(1, "%s Unable to allocate memory\n", tag);
-		return -ENOMEM;
-	}
-
-	bdata->check_display_name = of_property_read_bool(np, "fts,check-display-name");
-
-	config_info = bdata->config_array;
-	for_each_child_of_node(np, temp) {
-		retval = of_property_read_u32(temp, "fts,tp-vendor", &temp_val);
-
-		if (retval) {
-			logError(1, "%s Unable to read tp vendor\n", tag);
-		} else {
-			config_info->tp_vendor = (u8) temp_val;
-			logError(1, "%s %s:tp vendor: %u", tag, __func__,
-				 config_info->tp_vendor);
-		}
-		retval = of_property_read_u32(temp, "fts,tp-color", &temp_val);
-		if (retval) {
-			logError(1, "%s Unable to read tp color\n", tag);
-		} else {
-			config_info->tp_color = (u8) temp_val;
-			logError(1, "%s %s:tp color: %u", tag, __func__,
-				 config_info->tp_color);
-		}
-
-		retval =
-		    of_property_read_u32(temp, "fts,tp-hw-version", &temp_val);
-
-		if (retval) {
-			logError(1, "%s Unable to read tp hw version\n", tag);
-		} else {
-			config_info->tp_hw_version = (u8) temp_val;
-			logError(1, "%s %s:tp color: %u", tag, __func__,
-				 config_info->tp_hw_version);
-		}
-
-		retval = of_property_read_string(temp, "fts,fw-name",
-						 &config_info->fts_cfg_name);
-
-		if (retval && (retval != -EINVAL)) {
-			logError(1, "%s Unable to read cfg name\n", tag);
-		} else {
-			logError(1, "%s %s:fw_name: %s", tag, __func__,
-				 config_info->fts_cfg_name);
-		}
-		retval = of_property_read_string(temp, "fts,limit-name",
-						 &config_info->fts_limit_name);
-
-		if (retval && (retval != -EINVAL)) {
-			logError(1, "%s Unable to read limit name\n", tag);
-		} else {
-			logError(1, "%s %s:limit_name: %s", tag, __func__,
-				 config_info->fts_limit_name);
-		}
-
-		config_info++;
-	}
-
 	return OK;
 }
-
-static void fts_switch_mode_work(struct work_struct *work)
-{
-	struct fts_mode_switch *ms =
-	    container_of(work, struct fts_mode_switch, switch_mode_work);
-
-	struct fts_ts_info *info = ms->info;
-	unsigned char value = ms->mode;
-	static const char *fts_gesture_on = "01 20";
-	char *gesture_result;
-	int size = 6 * 2 + 1;
-
-	logError(1, "%s %s mode:%d\n", tag, __func__, value);
-
-	if (value >= INPUT_EVENT_WAKUP_MODE_OFF
-	    && value <= INPUT_EVENT_WAKUP_MODE_ON) {
-		info->gesture_enabled = value - INPUT_EVENT_WAKUP_MODE_OFF;
-		if (info->gesture_enabled) {
-			gesture_result = (u8 *) kzalloc(size, GFP_KERNEL);
-			if (gesture_result != NULL) {
-				fts_gesture_mask_store(info->dev, NULL,
-						       fts_gesture_on,
-						       strlen(fts_gesture_on));
-				fts_gesture_mask_show(info->dev, NULL,
-						      gesture_result);
-				if (strncmp
-				    ("{ 00000000 }", gesture_result, size - 1))
-					logError(1,
-						 "%s %s:store gesture mask error\n",
-						 tag, __func__);
-				kfree(gesture_result);
-				gesture_result = NULL;
-			}
-		}
-	} else if (value >= INPUT_EVENT_COVER_MODE_OFF
-		   && value <= INPUT_EVENT_COVER_MODE_ON) {
-		info->glove_enabled = value - INPUT_EVENT_COVER_MODE_OFF;
-		fts_mode_handler(info, 1);
-	}
-#ifdef EDGEHOVER_FOR_VOLUME
-	if (value >= INPUT_EVENT_SLIDE_FOR_VOLUME
-	    && value <= INPUT_EVENT_LONG_SINGLE_TAP_FOR_VOLUME) {
-		info->volume_type = value;
-		if (fts_info->volume_type == INPUT_EVENT_SINGLE_TAP_FOR_VOLUME) {
-			fts_info->single_press_time_low = 30;
-			fts_info->single_press_time_hi = 800;
-		} else if (fts_info->volume_type ==
-			   INPUT_EVENT_LONG_SINGLE_TAP_FOR_VOLUME) {
-			fts_info->single_press_time_low = 300;
-			fts_info->single_press_time_hi = 800;
-		}
-	}
-#endif
-#ifdef PHONE_PALM
-	if (value >= INPUT_EVENT_PALM_OFF && value <= INPUT_EVENT_PALM_ON)
-		info->palm_enabled = value - INPUT_EVENT_PALM_OFF;
-#endif
-	if (ms != NULL) {
-		kfree(ms);
-		ms = NULL;
-	}
-}
-
-static int fts_input_event(struct input_dev *dev, unsigned int type,
-			   unsigned int code, int value)
-{
-	struct fts_ts_info *info = input_get_drvdata(dev);
-	struct fts_mode_switch *ms;
-
-	logError(1, "%s %s:set input event value = %d\n", tag, __func__, value);
-
-	if (!info) {
-		printk("%s fts_ts_info is NULL\n", __func__);
-		return 0;
-	}
-
-	if (type == EV_SYN && code == SYN_CONFIG) {
-		if (value >= INPUT_EVENT_START && value <= INPUT_EVENT_END) {
-			ms = (struct fts_mode_switch *)
-			    kmalloc(sizeof(struct fts_mode_switch), GFP_ATOMIC);
-
-			if (ms != NULL) {
-				ms->info = info;
-				ms->mode = (unsigned char)value;
-				INIT_WORK(&ms->switch_mode_work,
-					  fts_switch_mode_work);
-				schedule_work(&ms->switch_mode_work);
-			} else {
-				logError(1,
-					 "%s %s:failed in allocating memory for switching mode\n",
-					 tag, __func__);
-				return -ENOMEM;
-			}
-		} else {
-			logError(1, "%s %s:Invalid event value\n", tag,
-				 __func__);
-			return -EINVAL;
-		}
-	}
-
-	return 0;
-}
-
-static int fts_short_open_test(void)
-{
-	TestToDo selftests;
-	int res = -1;
-	int init_type = SPECIAL_PANEL_INIT;
-
-	selftests.MutualRawAdjITO = 0;
-	selftests.MutualRaw = 0;
-	selftests.MutualRawEachNode = 1;
-	selftests.MutualRawGap = 0;
-	selftests.MutualRawAdj = 0;
-	selftests.MutualRawLP = 0;
-	selftests.MutualRawGapLP = 0;
-	selftests.MutualRawAdjLP = 0;
-	selftests.MutualCx1 = 0;
-	selftests.MutualCx2 = 0;
-	selftests.MutualCx2Adj = 0;
-	selftests.MutualCxTotal = 0;
-	selftests.MutualCxTotalAdj = 0;
-	selftests.MutualCx1LP = 0;
-	selftests.MutualCx2LP = 0;
-	selftests.MutualCx2AdjLP = 0;
-	selftests.MutualCxTotalLP = 0;
-	selftests.MutualCxTotalAdjLP = 0;
-#ifdef PHONE_KEY
-	selftests.MutualKeyRaw = 0;
-#else
-	selftests.MutualKeyRaw = 0;
-#endif
-	selftests.MutualKeyCx1 = 0;
-	selftests.MutualKeyCx2 = 0;
-#ifdef PHONE_KEY
-	selftests.MutualKeyCxTotal = 0;
-#else
-	selftests.MutualKeyCxTotal = 0;
-#endif
-	selftests.SelfForceRaw = 1;
-	selftests.SelfForceRawGap = 0;
-	selftests.SelfForceRawLP = 0;
-	selftests.SelfForceRawGapLP = 0;
-	selftests.SelfForceIx1 = 0;
-	selftests.SelfForceIx2 = 0;
-	selftests.SelfForceIx2Adj = 0;
-	selftests.SelfForceIxTotal = 0;
-	selftests.SelfForceIxTotalAdj = 0;
-	selftests.SelfForceCx1 = 0;
-	selftests.SelfForceCx2 = 0;
-	selftests.SelfForceCx2Adj = 0;
-	selftests.SelfForceCxTotal = 0;
-	selftests.SelfForceCxTotalAdj = 0;
-	selftests.SelfSenseRaw = 1;
-	selftests.SelfSenseRawGap = 0;
-	selftests.SelfSenseRawLP = 0;
-	selftests.SelfSenseRawGapLP = 0;
-	selftests.SelfSenseIx1 = 0;
-	selftests.SelfSenseIx2 = 0;
-	selftests.SelfSenseIx2Adj = 0;
-	selftests.SelfSenseIxTotal = 0;
-	selftests.SelfSenseIxTotalAdj = 0;
-	selftests.SelfSenseCx1 = 0;
-	selftests.SelfSenseCx2 = 0;
-	selftests.SelfSenseCx2Adj = 0;
-	selftests.SelfSenseCxTotal = 0;
-	selftests.SelfSenseCxTotalAdj = 0;
-
-	res = fts_disableInterrupt();
-	if (res < 0) {
-		logError(0, "%s fts_disableInterrupt: ERROR %08X \n",
-			 tag, res);
-		res = (res | ERROR_DISABLE_INTER);
-		goto END;
-	}
-	res = production_test_main(LIMITS_FILE, 1, init_type, &selftests);
-END:
-	fts_mode_handler(fts_info, 1);
-	fts_enableInterrupt();
-	if (res == OK)
-		return FTS_RESULT_PASS;
-	else
-		return FTS_RESULT_FAIL;
-}
-
-static int fts_i2c_test(void)
-{
-	int ret = 0;
-	u8 data[SYS_INFO_SIZE] = { 0 };
-
-	logError(0, "%s %s: Reading System Info...\n", tag, __func__);
-	ret =
-	    fts_writeReadU8UX(FTS_CMD_FRAMEBUFFER_R, BITS_16, ADDR_FRAMEBUFFER,
-			      data, SYS_INFO_SIZE, DUMMY_FRAMEBUFFER);
-	if (ret < OK) {
-		logError(1,
-			 "%s %s: error while reading the system data ERROR %08X\n",
-			 tag, __func__, ret);
-		return FTS_RESULT_FAIL;
-	}
-
-	return FTS_RESULT_PASS;
-}
-
-static ssize_t fts_selftest_read(struct file *file, char __user *buf,
-				 size_t count, loff_t *pos)
-{
-	char tmp[5] = { 0 };
-	int cnt;
-
-	if (*pos != 0)
-		return 0;
-	cnt =
-	    snprintf(tmp, sizeof(fts_info->result_type), "%d\n",
-		     fts_info->result_type);
-	if (copy_to_user(buf, tmp, strlen(tmp))) {
-		return -EFAULT;
-	}
-	*pos += cnt;
-	return cnt;
-}
-
-static ssize_t fts_selftest_write(struct file *file, const char __user *buf,
-				  size_t count, loff_t *pos)
-{
-	int retval = 0;
-	char tmp[6];
-
-	if (copy_from_user(tmp, buf, count)) {
-		retval = -EFAULT;
-		goto out;
-	}
-
-	if (!strncmp("short", tmp, 5) || !strncmp("open", tmp, 4)) {
-		retval = fts_short_open_test();
-	} else if (!strncmp("i2c", tmp, 3))
-		retval = fts_i2c_test();
-
-	fts_info->result_type = retval;
-out:
-	if (retval >= 0)
-		retval = count;
-
-	return retval;
-}
-
-static const struct file_operations fts_selftest_ops = {
-	.read = fts_selftest_read,
-	.write = fts_selftest_write,
-};
 
 static ssize_t fts_datadump_read(struct file *file, char __user *buf,
 				 size_t count, loff_t *pos)
@@ -4554,77 +3354,6 @@ static ssize_t fts_fw_version_read(struct file *file, char __user *buf,
 static const struct file_operations fts_fw_version_ops = {
 	.read = fts_fw_version_read,
 };
-
-static ssize_t fts_lockdown_info_read(struct file *file, char __user *buf,
-				      size_t count, loff_t *pos)
-{
-	int cnt = 0, ret = 0;
-	char tmp[TP_INFO_MAX_LENGTH];
-
-	if (*pos != 0)
-		return 0;
-
-	ret = fts_get_lockdown_info(fts_info->lockdown_info, fts_info);
-	if (ret != OK) {
-		logError(1, "%s %s get lockdown info error\n", tag, __func__);
-		goto out;
-	}
-
-	cnt =
-	    snprintf(tmp, TP_INFO_MAX_LENGTH,
-		     "0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x\n",
-		     fts_info->lockdown_info[0], fts_info->lockdown_info[1],
-		     fts_info->lockdown_info[2], fts_info->lockdown_info[3],
-		     fts_info->lockdown_info[4], fts_info->lockdown_info[5],
-		     fts_info->lockdown_info[6], fts_info->lockdown_info[7]);
-	ret = copy_to_user(buf, tmp, cnt);
-out:
-	*pos += cnt;
-	if (ret != 0)
-		return 0;
-	else
-		return cnt;
-}
-
-static const struct file_operations fts_lockdown_info_ops = {
-	.read = fts_lockdown_info_read,
-};
-
-#ifdef CONFIG_PM
-static int fts_pm_suspend(struct device *dev)
-{
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-
-	info->dev_pm_suspend = true;
-	if (device_may_wakeup(dev) && info->gesture_enabled) {
-		logError(1, "%s enable touch irq wake\n", tag);
-		enable_irq_wake(info->client->irq);
-	}
-	reinit_completion(&info->dev_pm_suspend_completion);
-
-	return 0;
-
-}
-
-static int fts_pm_resume(struct device *dev)
-{
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-
-	info->dev_pm_suspend = false;
-	if (device_may_wakeup(dev) && info->gesture_enabled) {
-		logError(1, "%s disable touch irq wake\n", tag);
-		disable_irq_wake(info->client->irq);
-	}
-	complete(&info->dev_pm_suspend_completion);
-
-	return 0;
-}
-
-static const struct dev_pm_ops fts_dev_pm_ops = {
-	.suspend = fts_pm_suspend,
-	.resume = fts_pm_resume,
-};
-#endif
 
 #ifdef CONFIG_TOUCHSCREEN_ST_DEBUG_FS
 static void tpdbg_shutdown(struct fts_ts_info *info, bool sleep)
@@ -4811,16 +3540,6 @@ static int fts_probe(struct spi_device *client)
 		}
 		parse_dt(&client->dev, info->board);
 	}
-	if (info->board->check_display_name) {
-		display_name = dsi_get_display_name();
-		if (display_name) {
-			logError(1, "%s display_name:%s\n", tag, display_name);
-			if (strncmp(display_name, "dsi_samsung", 11)) {
-				logError(1, "%s not the right display, do not need to do probe%s\n", tag);
-				return -EINVAL;
-			}
-		}
-	}
 
 	logError(0, "%s SET Regulators: \n", tag);
 	retval = fts_get_reg(info, true);
@@ -4877,7 +3596,6 @@ static int fts_probe(struct spi_device *client)
 	}
 	INIT_WORK(&info->resume_work, fts_resume_work);
 	INIT_WORK(&info->suspend_work, fts_suspend_work);
-	init_completion(&info->tp_reset_completion);
 	logError(0, "%s SET Input Device Property: \n", tag);
 	info->dev = &info->client->dev;
 	info->input_dev = input_allocate_device();
@@ -4895,7 +3613,6 @@ static int fts_probe(struct spi_device *client)
 	info->input_dev->id.vendor = 0x0001;
 	info->input_dev->id.product = 0x0002;
 	info->input_dev->id.version = 0x0100;
-	info->input_dev->event = fts_input_event;
 	input_set_drvdata(info->input_dev, info);
 
 	__set_bit(EV_SYN, info->input_dev->evbit);
@@ -4910,9 +3627,9 @@ static int fts_probe(struct spi_device *client)
 	/*input_mt_init_slots(info->input_dev, TOUCH_ID_MAX); */
 
 	input_set_abs_params(info->input_dev, ABS_MT_POSITION_X, X_AXIS_MIN,
-		     info->board->x_max, 0, 0);
+		     X_AXIS_MAX, 0, 0);
 	input_set_abs_params(info->input_dev, ABS_MT_POSITION_Y, Y_AXIS_MIN,
-		     info->board->y_max, 0, 0);
+		     Y_AXIS_MAX, 0, 0);
 	input_set_abs_params(info->input_dev, ABS_MT_TOUCH_MAJOR, AREA_MIN,
 			     AREA_MAX, 0, 0);
 	input_set_abs_params(info->input_dev, ABS_MT_TOUCH_MINOR, AREA_MIN,
@@ -4984,15 +3701,12 @@ static int fts_probe(struct spi_device *client)
 	info->charger_enabled = 0;
 	info->cover_enabled = 0;
 	info->grip_enabled = 0;
-	info->grip_pixel_def = 30;
-	info->grip_pixel = info->grip_pixel_def;
 
 	info->resume_bit = 1;
 	info->lockdown_is_ok = false;
 #ifdef CONFIG_DRM_MSM
 	info->notifier = fts_noti_block;
 #endif
-	info->bl_notifier = fts_bl_noti_block;
 	logError(0, "%s Init Core Lib: \n", tag);
 	initCore(info);
 	/* init hardware device */
@@ -5006,23 +3720,10 @@ static int fts_probe(struct spi_device *client)
 	}
 
 	fts_info = info;
-	error = fts_get_lockdown_info(info->lockdown_info, info);
-
-	if (error < OK)
-		logError(1, "%s can't get lockdown info", tag);
-	else {
-		logError(1,
-			 "%s Lockdown:0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x\n",
-			 tag, info->lockdown_info[0], info->lockdown_info[1],
-			 info->lockdown_info[2], info->lockdown_info[3],
-			 info->lockdown_info[4], info->lockdown_info[5],
-			 info->lockdown_info[6], info->lockdown_info[7]);
-		info->lockdown_is_ok = true;
-	}
 
 #ifdef FW_UPDATE_ON_PROBE
 	logError(1, "%s FW Update and Sensing Initialization: \n", tag);
-	error = fts_fw_update(info, NULL, 0);
+	error = fts_fw_update(info);
 	if (error < OK) {
 		logError(1,
 			 "%s Cannot execute fw upgrade the device ERROR %08X\n",
@@ -5059,13 +3760,6 @@ static int fts_probe(struct spi_device *client)
 
 	device_init_wakeup(&client->dev, 1);
 
-	info->dev_pm_suspend = false;
-	init_completion(&info->dev_pm_suspend_completion);
-
-	if (backlight_register_notifier(&info->bl_notifier) < 0) {
-		logError(1, "%s ERROR: register bl_notifier failed!\n", tag);
-	}
-
 #ifdef CONFIG_TOUCHSCREEN_ST_DEBUG_FS
 	info->debugfs = debugfs_create_dir("tp_debug", NULL);
 	if (info->debugfs) {
@@ -5073,34 +3767,6 @@ static int fts_probe(struct spi_device *client)
 				    &tpdbg_operations);
 	}
 #endif
-	if (info->fts_tp_class == NULL)
-		info->fts_tp_class = class_create(THIS_MODULE, "touch");
-	info->fts_touch_dev =
-	    device_create(info->fts_tp_class, NULL, 0x49, info, "tp_dev");
-
-	if (IS_ERR(info->fts_touch_dev)) {
-		logError(1,
-			 "%s ERROR: Failed to create device for the sysfs!\n",
-			 tag);
-		goto ProbeErrorExit_8;
-	}
-
-	dev_set_drvdata(info->fts_touch_dev, info);
-
-	error =
-	    sysfs_create_file(&info->fts_touch_dev->kobj,
-			      &dev_attr_fod_status.attr);
-	if (error) {
-		logError(1, "%s ERROR: Failed to create fod_status sysfs group!\n", tag);
-	}
-	info->tp_lockdown_info_proc =
-	    proc_create("tp_lockdown_info", 0, NULL, &fts_lockdown_info_ops);
-	info->tp_selftest_proc =
-	    proc_create("tp_selftest", 0644, NULL, &fts_selftest_ops);
-	info->tp_data_dump_proc =
-	    proc_create("tp_data_dump", 0, NULL, &fts_datadump_ops);
-	info->tp_fw_version_proc =
-	    proc_create("tp_fw_version", 0, NULL, &fts_fw_version_ops);
 
 #ifndef FW_UPDATE_ON_PROBE
 	queue_delayed_work(info->fwu_workqueue, &info->fwu_work,
@@ -5109,11 +3775,6 @@ static int fts_probe(struct spi_device *client)
 
 	logError(1, "%s Probe Finished! \n", tag);
 	return OK;
-
-ProbeErrorExit_8:
-    device_destroy(info->fts_tp_class, 0x49);
-    class_destroy(info->fts_tp_class);
-    info->fts_tp_class = NULL;
 
 ProbeErrorExit_7:
 #ifdef CONFIG_DRM_MSM
@@ -5164,7 +3825,6 @@ static int fts_remove(struct spi_device *client)
 	sysfs_remove_group(&client->dev.kobj, &info->attrs);
 	/* remove interrupt and event handlers */
 	fts_interrupt_uninstall(info);
-	backlight_unregister_notifier(&info->bl_notifier);
 #ifdef CONFIG_DRM_MSM
 	msm_drm_unregister_client(&info->notifier);
 #endif
@@ -5205,12 +3865,9 @@ static const struct i2c_device_id fts_device_id[] = {
 
 static struct i2c_driver fts_i2c_driver = {
 	.driver = {
-		   .name = FTS_TS_DRV_NAME,
-		   .of_match_table = fts_of_match_table,
-#ifdef CONFIG_PM
-		   .pm = &fts_dev_pm_ops,
-#endif
-		   },
+		.name = FTS_TS_DRV_NAME,
+		.of_match_table = fts_of_match_table,
+	},
 	.probe = fts_probe,
 	.remove = fts_remove,
 	.id_table = fts_device_id,

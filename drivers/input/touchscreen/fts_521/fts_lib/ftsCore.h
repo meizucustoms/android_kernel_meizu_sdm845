@@ -31,7 +31,6 @@
 #define ADDR_SIZE_HW_REG					BITS_32							/*value of AddrSize for Hw register in FTI @see AddrSize*/
 
 #define DATA_HEADER							4								/*size in byte of the header loaded with the data in the frambuffer*/
-#define LOCKDOWN_CODE_RETRY  				2
 /**
  * Type of CRC errors
  */
@@ -56,14 +55,6 @@ typedef enum {
 /*RETRY MECHANISM*/
 #define RETRY_MAX_REQU_DATA					2								/*Max number of attemps performed when requesting data*/
 #define RETRY_SYSTEM_RESET					3									/*Max number of attemps performed to reset the IC*/
-
-/*LOCKDOWN INFO*/
-#define LOCKDOWN_LENGTH						384
-#define LOCKDOWN_HEAD_LENGTH				4
-#define LOCKDOWN_DATA_OFFSET				20
-#define LOCKDOWN_SIGNATURE					0x5A
-#define ADDR_LOCKDOWN						((u64)0x0000000000000000)
-#define LOCKDOWN_WRITEREAD_CMD				0xA6
 
 /** @addtogroup system_info
 * @{
@@ -173,8 +164,5 @@ int fts_resetDisableIrqCount(void);
 int fts_enableInterrupt(void);
 int fts_crc_check(void);
 int requestSyncFrame(u8 type);
-int fts_get_lockdown_info(u8 *lockData, struct fts_ts_info *info);
-int writeLockDownInfo(u8 *data, int size, u8 lock_id);
-int readLockDownInfo(u8 *lockData, u8 lock_id, int size);
 
 #endif /* FTS_CORE_H */

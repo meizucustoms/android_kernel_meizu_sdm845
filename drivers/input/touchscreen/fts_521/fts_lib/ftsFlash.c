@@ -110,7 +110,7 @@ int getFWdata(const char *pathToFile, u8 **data, int *size)
 	logError(1, "%s getFWdata starting ...\n", tag);
 	if (strncmp(pathToFile, "NULL", 4) == 0) {
 		from = 1;
-		path = (char *)fts_info->board->default_fw_name;
+		path = "NULL";
 	}
 	switch (from) {
 #ifdef FW_H_FILE
