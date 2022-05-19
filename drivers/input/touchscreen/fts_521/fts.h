@@ -58,8 +58,8 @@
 
 #define PRE_SAVED_METHOD
 
-/*#define FW_H_FILE*/
-#define FW_UPDATE_ON_PROBE
+#define FW_H_FILE
+/*#define FW_UPDATE_ON_PROBE*/
 #ifdef FW_H_FILE
 #define FW_SIZE_NAME myArray_size
 #define FW_ARRAY_NAME myArray
@@ -71,7 +71,7 @@
 #define LIMITS_ARRAY_NAME myArray2
 #endif
 
-/*#define USE_ONE_FILE_NODE*/
+#define USE_ONE_FILE_NODE
 
 #ifndef FW_UPDATE_ON_PROBE
 #define EXP_FN_WORK_DELAY_MS				1000
@@ -88,21 +88,23 @@
 #define USE_GESTURE_MASK
 #endif
 
-#define CHARGER_MODE
+#define GRIP_MODE
 
-#define GLOVE_MODE
+/* #define CHARGER_MODE */
 
-#define COVER_MODE
+/* #define GLOVE_MODE */
 
-#define STYLUS_MODE
+/* #define COVER_MODE */
+
+/* #define STYLUS_MODE */
 
 
 /**** END ****/
 
 /**** PANEL SPECIFICATION ****/
-#define X_AXIS_MAX                          1079
+#define X_AXIS_MAX                          1080
 #define X_AXIS_MIN                          0
-#define Y_AXIS_MAX                          2247
+#define Y_AXIS_MAX                          2160
 #define Y_AXIS_MIN                          0
 
 #define PRESSURE_MIN                        0
