@@ -50,8 +50,8 @@
 #include <linux/regulator/consumer.h>
 
 #include <linux/notifier.h>
-#ifdef CONFIG_DRM
-#include <drm/drm_notifier.h>
+#ifdef CONFIG_DRM_MSM
+#include <linux/msm_drm_notify.h>
 #endif
 #include <linux/backlight.h>
 
@@ -1224,8 +1224,8 @@ static ssize_t stm_fts_cmd_show(struct device *dev,
 			res = (res | ERROR_DISABLE_INTER);
 			goto END;
 		}
-#ifdef CONFIG_DRM
-		res = drm_unregister_client(&info->notifier);
+#ifdef CONFIG_DRM_MSM
+		res = msm_drm_unregister_client(&info->notifier);
 		if (res < 0) {
 			logError(1, "%s ERROR: unregister notifier failed!\n",
 				 tag);
@@ -1450,8 +1450,8 @@ static ssize_t stm_fts_cmd_show(struct device *dev,
 		res = ERROR_OP_NOT_ALLOW;
 
 	}
-#ifdef CONFIG_DRM
-	if (drm_register_client(&info->notifier) < 0) {
+#ifdef CONFIG_DRM_MSM
+	if (msm_drm_register_client(&info->notifier) < 0) {
 		logError(1, "%s ERROR: register notifier failed!\n", tag);
 	}
 #endif
@@ -3554,8 +3554,8 @@ int fts_chip_powercycle(struct fts_ts_info *info)
 static int fts_init_sensing(struct fts_ts_info *info)
 {
 	int error = 0;
-#ifdef CONFIG_DRM
-	error |= drm_register_client(&info->notifier);
+#ifdef CONFIG_DRM_MSM
+	error |= msm_drm_register_client(&info->notifier);
 #endif
 	error |= fts_interrupt_install(info);
 	error |= fts_mode_handler(info, 0);
@@ -3778,7 +3778,7 @@ static void fts_suspend_work(struct work_struct *work)
 	info->sensor_sleep = true;
 }
 
-#ifdef CONFIG_DRM
+#ifdef CONFIG_DRM_MSM
 /**@}*/
 
 /**
@@ -3801,13 +3801,13 @@ static int fts_drm_state_chg_callback(struct notifier_block *nb,
 		logError(1, "%s %s: val:%lu,blank:%u\n", tag, __func__, val, blank);
 
 		flush_workqueue(info->event_wq);
-		if (val == DRM_EARLY_EVENT_BLANK && blank == DRM_BLANK_POWERDOWN) {
+		if (val == MSM_DRM_EARLY_EVENT_BLANK && blank == MSM_DRM_BLANK_POWERDOWN) {
 			if (info->sensor_sleep)
 				return NOTIFY_OK;
 
 			logError(1, "%s %s: FB_BLANK_POWERDOWN\n", tag, __func__);
 			queue_work(info->event_wq, &info->suspend_work);
-		} else if (val == DRM_EVENT_BLANK && blank == DRM_BLANK_UNBLANK) {
+		} else if (val == MSM_DRM_EVENT_BLANK && blank == MSM_DRM_BLANK_UNBLANK) {
 			if (!info->sensor_sleep)
 				return NOTIFY_OK;
 			logError(1, "%s %s: FB_BLANK_UNBLANK\n", tag, __func__);
@@ -4989,7 +4989,7 @@ static int fts_probe(struct spi_device *client)
 
 	info->resume_bit = 1;
 	info->lockdown_is_ok = false;
-#ifdef CONFIG_DRM
+#ifdef CONFIG_DRM_MSM
 	info->notifier = fts_noti_block;
 #endif
 	info->bl_notifier = fts_bl_noti_block;
@@ -5116,8 +5116,8 @@ ProbeErrorExit_8:
     info->fts_tp_class = NULL;
 
 ProbeErrorExit_7:
-#ifdef CONFIG_DRM
-	drm_unregister_client(&info->notifier);
+#ifdef CONFIG_DRM_MSM
+	msm_drm_unregister_client(&info->notifier);
 #endif
 
 ProbeErrorExit_6:
@@ -5165,8 +5165,8 @@ static int fts_remove(struct spi_device *client)
 	/* remove interrupt and event handlers */
 	fts_interrupt_uninstall(info);
 	backlight_unregister_notifier(&info->bl_notifier);
-#ifdef CONFIG_DRM
-	drm_unregister_client(&info->notifier);
+#ifdef CONFIG_DRM_MSM
+	msm_drm_unregister_client(&info->notifier);
 #endif
 
 	/* unregister the device */
