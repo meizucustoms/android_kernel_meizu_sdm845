@@ -60,7 +60,6 @@
 #include <linux/proc_fs.h>
 #include <linux/uaccess.h>
 #include <linux/debugfs.h>
-#include <linux/hwinfo.h>
 #ifdef KERNEL_ABOVE_2_6_38
 #include <linux/input/mt.h>
 #endif
@@ -137,7 +136,6 @@ extern struct mutex gestureMask_mutex;
 #ifdef PHONE_KEY
 static u8 key_mask;
 #endif
-extern void lpm_disable_for_input(bool on);
 extern spinlock_t fts_int;
 struct fts_ts_info *fts_info;
 
@@ -145,7 +143,7 @@ static int fts_init_sensing(struct fts_ts_info *info);
 static int fts_mode_handler(struct fts_ts_info *info, int force);
 static int fts_chip_initialization(struct fts_ts_info *info, int init_type);
 
-static irqreturn_t fts_event_handler(int irq, void *ts_info);
+static void fts_event_handler(struct work_struct *ws);
 bool wait_queue_complete;
 
 
@@ -170,7 +168,6 @@ void release_all_touches(struct fts_ts_info *info)
 		input_report_abs(info->input_dev, ABS_MT_TRACKING_ID, -1);
 	}
 	input_sync(info->input_dev);
-	lpm_disable_for_input(false);
 	info->touch_id = 0;
 #ifdef STYLUS_MODE
 	info->stylus_id = 0;
@@ -1598,7 +1595,6 @@ END:
 
 static DEVICE_ATTR(fwupdate, (S_IRUGO | S_IWUSR | S_IWGRP), fts_fwupdate_show,
 		   fts_fwupdate_store);
-static DEVICE_ATTR(ms_strength, (S_IRUGO), fts_strength_frame_show, NULL);
 static DEVICE_ATTR(appid, (S_IRUGO), fts_appid_show, NULL);
 static DEVICE_ATTR(mode_active, (S_IRUGO), fts_mode_active_show, NULL);
 static DEVICE_ATTR(fw_file_test, (S_IRUGO), fts_fw_test_show, NULL);
@@ -1855,7 +1851,6 @@ static void fts_leave_pointer_event_handler(struct fts_ts_info *info,
 		input_report_key(info->input_dev, BTN_TOUCH, touch_condition);
 		if (!touch_condition)
 			input_report_key(info->input_dev, BTN_TOOL_FINGER, 0);
-		lpm_disable_for_input(false);
 	}
 	input_report_abs(info->input_dev, ABS_MT_TRACKING_ID, -1);
 	dev_dbg(info->dev,
@@ -2338,9 +2333,10 @@ static void fts_user_report_event_handler(struct fts_ts_info *info,
  * This handler is called each time there is at least one new event in the FIFO and the interrupt pin of the IC goes low.
  * It will read all the events from the FIFO and dispatch them to the proper event handler according the event ID
  */
-static irqreturn_t fts_event_handler(int irq, void *ts_info)
+void fts_event_handler(struct work_struct *ws)
 {
-	struct fts_ts_info *info = ts_info;
+	struct fts_ts_info *info = 
+		container_of(ws, struct fts_ts_info, work);
 	int error = 0, count = 0;
 	unsigned char regAdd = FIFO_CMD_READALL;
 	unsigned char data[FIFO_EVENT_SIZE * FIFO_DEPTH] = {0};
@@ -2351,7 +2347,8 @@ static irqreturn_t fts_event_handler(int irq, void *ts_info)
 	unsigned char *evt_data;
 	event_dispatch_handler_t event_handler;
 
-	lpm_disable_for_input(true);
+	__pm_wakeup_event(&info->wakesrc, jiffies_to_msecs(100));
+
 	error = fts_writeReadU8UX(regAdd, 0, 0, data, FIFO_EVENT_SIZE,
 				  DUMMY_FIFO);
 	events_remaining = data[EVENTS_REMAINING_POS] & EVENTS_REMAINING_MASK;
@@ -2383,8 +2380,16 @@ static irqreturn_t fts_event_handler(int irq, void *ts_info)
 		}
 	}
 	input_sync(info->input_dev);
-	if (!info->touch_id)
-		lpm_disable_for_input(false);
+	enable_irq(info->client->irq);
+}
+
+static irqreturn_t fts_interrupt_handler(int irq, void *handle)
+{
+	struct fts_ts_info *info = (struct fts_ts_info *) handle;
+
+	disable_irq_nosync(info->client->irq);
+	queue_work(info->event_wq, &info->work);
+
 	return IRQ_HANDLED;
 }
 
@@ -2598,8 +2603,8 @@ static int fts_interrupt_install(struct fts_ts_info *info)
 	/* disable interrupts in any case */
 	error = fts_disableInterrupt();
 	logError(1, "%s Interrupt Mode\n", tag);
-	if (request_threaded_irq(info->client->irq, NULL, fts_event_handler, 0,
-			 FTS_TS_DRV_NAME, info)) {
+	if (request_threaded_irq(info->client->irq, fts_interrupt_handler, NULL,
+			IRQF_TRIGGER_LOW, FTS_TS_DRV_NAME, info)) {
 		logError(1, "%s Request irq failed\n", tag);
 		kfree(info->event_dispatch_table);
 		error = -EBUSY;
@@ -3162,19 +3167,16 @@ static int fts_set_gpio(struct fts_ts_info *info)
 
 	pinctrl_select_state(bdata->pctrl, bdata->irq_pstate);
 
-	if (bdata->reset_gpio >= 0) {
-		retval = fts_gpio_setup(bdata->reset_gpio, true, 1, 0);
-		if (retval < 0) {
-			logError(1, "%s %s: Failed to configure reset GPIO\n",
-				 tag, __func__);
-			goto err_gpio_reset;
-		}
+	retval = fts_gpio_setup(bdata->reset_gpio, true, 1, 0);
+	if (retval < 0) {
+		logError(1, "%s %s: Failed to configure reset GPIO\n",
+				tag, __func__);
+		goto err_gpio_reset;
 	}
-	if (bdata->reset_gpio >= 0) {
-		gpio_set_value(bdata->reset_gpio, 0);
-		mdelay(10);
-		gpio_set_value(bdata->reset_gpio, 1);
-	}
+
+	gpio_set_value(bdata->reset_gpio, 0);
+	mdelay(10);
+	gpio_set_value(bdata->reset_gpio, 1);
 
 	return OK;
 
@@ -3260,63 +3262,6 @@ static int parse_dt(struct device *dev, struct fts_hw_platform_data *bdata)
 
 	return OK;
 }
-
-static ssize_t fts_datadump_read(struct file *file, char __user *buf,
-				 size_t count, loff_t *pos)
-{
-	int ret = 0, cnt1 = 0, cnt2 = 0, cnt3 = 0;
-	char *tmp;
-
-	if (*pos != 0)
-		return 0;
-
-	tmp = vmalloc(PAGE_SIZE * 2);
-	if (tmp == NULL)
-		return 0;
-	else
-		memset(tmp, 0, PAGE_SIZE * 2);
-
-	cnt1 = fts_strength_frame_show(fts_info->dev, NULL, tmp);
-	if (cnt1 == 0) {
-		ret = 0;
-		goto out;
-	}
-
-	ret = stm_fts_cmd_store(fts_info->dev, NULL, "13", 2);
-	if (ret == 0)
-		goto out;
-	cnt2 = stm_fts_cmd_show(fts_info->dev, NULL, tmp + cnt1);
-	if (cnt2 == 0) {
-		ret = 0;
-		goto out;
-	}
-
-	ret = stm_fts_cmd_store(fts_info->dev, NULL, "15", 2);
-	if (ret == 0)
-		goto out;
-	cnt3 = stm_fts_cmd_show(fts_info->dev, NULL, tmp + cnt1 + cnt2);
-	if (cnt3 == 0) {
-		ret = 0;
-		goto out;
-	}
-
-	if (copy_to_user(buf, tmp, cnt1 + cnt2 + cnt3))
-		ret = -EFAULT;
-
-out:
-	if (tmp) {
-		vfree(tmp);
-		tmp = NULL;
-	}
-	*pos += (cnt1 + cnt2 + cnt3);
-	if (ret <= 0)
-		return ret;
-	return cnt1 + cnt2 + cnt3;
-}
-
-static const struct file_operations fts_datadump_ops = {
-	.read = fts_datadump_read,
-};
 
 #define TP_INFO_MAX_LENGTH 50
 
@@ -3565,6 +3510,8 @@ static int fts_probe(struct spi_device *client)
 
 	logError(0, "%s SET Event Handler: \n", tag);
 
+	wakeup_source_init(&info->wakesrc, "fts-tp");
+
 	info->event_wq =
 	    alloc_workqueue("fts-event-queue",
 			    WQ_UNBOUND | WQ_HIGHPRI | WQ_CPU_INTENSIVE, 1);
@@ -3573,6 +3520,7 @@ static int fts_probe(struct spi_device *client)
 		error = -ENOMEM;
 		goto ProbeErrorExit_4;
 	}
+	INIT_WORK(&info->work, fts_event_handler);
 	INIT_WORK(&info->resume_work, fts_resume_work);
 	INIT_WORK(&info->suspend_work, fts_suspend_work);
 	logError(0, "%s SET Input Device Property: \n", tag);
@@ -3682,7 +3630,6 @@ static int fts_probe(struct spi_device *client)
 	info->grip_enabled = 0;
 
 	info->resume_bit = 1;
-	info->lockdown_is_ok = false;
 #ifdef CONFIG_DRM_MSM
 	info->notifier = fts_noti_block;
 #endif
@@ -3771,6 +3718,8 @@ ProbeErrorExit_5:
 	destroy_workqueue(info->event_wq);
 
 ProbeErrorExit_4:
+	wakeup_source_remove(&info->wakesrc);
+    wakeup_source_drop(&info->wakesrc);
 	fts_enable_reg(info, false);
 
 ProbeErrorExit_2:

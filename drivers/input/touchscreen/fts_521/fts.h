@@ -39,6 +39,7 @@
 #include "fts_lib/ftsSoftware.h"
 #include "fts_lib/ftsHardware.h"
 #include <linux/completion.h>
+#include <linux/device.h>
 /****************** CONFIGURATION SECTION ******************/
 /** @defgroup conf_section	 Driver Configuration Section
 * Settings of the driver code in order to suit the HW set up and the application behavior
@@ -240,6 +241,8 @@ struct fts_ts_info {
 
 	struct notifier_block notifier;
 	bool sensor_sleep;
+
+	struct wakeup_source wakesrc;
 
 	/* input lock */
 	struct mutex input_report_mutex;
