@@ -1,5 +1,4 @@
-/* Copyright (c) 2017, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022, MeizuCustoms enthusiasts
+/* Copyright (c) 2022, MeizuCustoms enthusiasts
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -11,14 +10,23 @@
  * GNU General Public License for more details.
  */
 
-/dts-v1/;
-
-#include "sdm845-meizu-m1892.dtsi"
-
 / {
-	model = "MeizuSucks Project, Meizu 16th Plus (M1892) (DTB)";
-	compatible = "qcom,sdm845";
-	qcom,msm-id = <0x141 0x20001>;
-	qcom,board-id = <0 0>;
+    reserved-memory {
+        ramoops_mem: ramoops@9ff00000 {
+		    compatible = "ramoops";
+		    reg = <0x00 0x9ff00000 0x00 0x200000>;
+		    record-size = <0x4000>;
+		    console-size = <0x40000>;
+		};
+ 
+		psn_mem: psn_mem_region@a0100000 {
+		    compatible = "removed-dma-pool";
+		    no-map;
+		    reg = <0x00 0xa0100000 0x00 0x400>;
+		};
+    };
 };
 
+&removed_region {
+    reg = <0 0x85fc0000 0 0x4b40000>;
+};

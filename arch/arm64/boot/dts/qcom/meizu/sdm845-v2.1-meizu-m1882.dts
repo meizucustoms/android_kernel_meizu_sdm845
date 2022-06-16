@@ -13,7 +13,7 @@
 
 /dts-v1/;
 
-#include "appended/sdm845-meizu-m1882.dtsi"
+#include "sdm845-meizu-m1882.dtsi"
 
 / {
 	model = "MeizuSucks Project, Meizu 16th (M1882) (DTB)";

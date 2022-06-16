@@ -10,4 +10,4 @@
  * GNU General Public License for more details.
  */
 
-#include "sdm845-v2.1.dtsi"
+#include "sdm845-meizu-common.dtsi"

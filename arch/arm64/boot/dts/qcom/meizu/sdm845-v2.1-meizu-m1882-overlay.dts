@@ -19,7 +19,7 @@
 #include <dt-bindings/clock/qcom,rpmh.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 
-#include "overlay/sdm845-meizu-m1882-overlay.dtsi"
+#include "sdm845-meizu-m1882-overlay.dtsi"
 
 / {
 	model = "MeizuSucks Project, Meizu 16th (M1882)";

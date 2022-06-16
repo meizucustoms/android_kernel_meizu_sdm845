@@ -1,5 +1,4 @@
-/* Copyright (c) 2017, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022, MeizuCustoms enthusiasts
+/* Copyright (c) 2022, MeizuCustoms enthusiasts
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -11,14 +10,23 @@
  * GNU General Public License for more details.
  */
 
-/dts-v1/;
-
-#include "sdm845-meizu-m1892.dtsi"
-
 / {
-	model = "MeizuSucks Project, Meizu 16th Plus (M1892) (DTB)";
-	compatible = "qcom,sdm845";
-	qcom,msm-id = <0x141 0x20001>;
-	qcom,board-id = <0 0>;
-};
+    firmware: firmware {
+		android {
+			fstab {
+				vendor {
+					fsmgr_flags = "wait,avb";
+				};
 
+				system {
+					compatible = "android,system";
+					dev = "/dev/block/platform/soc/1d84000.ufshc/by-name/system";
+					type = "ext4";
+					mnt_flags = "ro,barrier=1,discard";
+					fsmgr_flags = "wait,avb";
+                    status = "ok";
+				};
+			};
+		};
+	};
+};
